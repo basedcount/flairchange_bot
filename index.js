@@ -1,9 +1,10 @@
-const { CommentStream } = require("snoostorm");
+const { CommentStream } = require('snoostorm');
 
 require('dotenv').config();
 const Snoowrap = require('snoowrap');
 const Snoostorm = require('snoostorm');
 
+const uri = process.env.MONGODB_URI
 const r = new Snoowrap({
     userAgent: 'some-description',
     clientId: process.env.CLIENT_ID,
