@@ -1,0 +1,28 @@
+{
+  "name": "flairchange_bot",
+  "version": "1.0.0",
+  "description": "Detecting user flair changes in r/PoliticalCompassMemes",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ornato-t/flair-change-is-cringe.git"
+  },
+  "keywords": [
+    "reddit",
+    "reddit_bot"
+  ],
+  "author": "ornato-t",
+  "license": "GPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/ornato-t/flair-change-is-cringe/issues"
+  },
+  "homepage": "https://github.com/ornato-t/flair-change-is-cringe#readme",
+  "dependencies": {
+    "dotenv": "^16.0.0",
+    "snoostorm": "^1.5.2",
+    "snoowrap": "^1.23.0"
+  }
+}
