@@ -56,7 +56,7 @@ stream.on('item', comment => {
 
                     if (comment.author_fullname === 't2_105aw2') { //Test line, remove on release (only answers DEV - prevents spam)
                         console.log('Answering:', comment.body)
-                        comment.reply(msg)
+                            // comment.reply(msg)   //Let's just avoid this. Add on release
                     }
                 })
             }
