@@ -47,7 +47,7 @@ stream.on('item', comment => {
                     })
                     // console.log('Inserted:', comment.author_fullname, comment.author.name, flair)
             } else if (res.flair != flair) {
-                console.log('Flair change!', comment.author_fullname, comment.author.name, 'was', flair, 'now is', res.flair)
+                console.log('Flair change!', comment.author_fullname, comment.author.name, 'was', res.flair, 'now is', flair)
                     //Update, todo
             } else { //User already present in DB
                 // console.log('Touch some grass:', comment.author_fullname, comment.author.name, flair)
