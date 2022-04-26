@@ -20,6 +20,8 @@ const r = new Snoowrap({
 const stream = new CommentStream(r, {
     subreddit: 'PoliticalCompassMemes',
     results: 1
+        /*,
+             pollTime: 5000*/ //Add this line if reddit api seems slow
 });
 
 client.connect()
@@ -27,30 +29,36 @@ const db = client.db('flairChangeBot');
 
 stream.on('item', comment => {
     let flair = comment.author_flair_text
-    if (flair != null)
+
+    if (flair != null) { //If user is NOT unflaired, parse the flair and save it correctly
         flair = flair.substring(flair.indexOf('-') + 2)
-    else {
-        // console.log('Unflaired:', comment.author_fullname, comment.author.name, flair) //User is unflaired, no need to lose my time here
+    } else { //User is unflaired, no need to lose my time here
         return
     }
 
     (async() => {
-
-        let returned = await db.collection('PCM_users').findOne({ id: comment.author_fullname }, async(err, res) => {
+        await db.collection('PCM_users').findOne({ id: comment.author_fullname }, async(err, res) => { //Check for any already present occurrence
             if (err) throw err
+
             if (res === null) { //User not present in DB
-                await db.collection('PCM_users').insertOne({
-                        id: comment.author_fullname,
-                        name: comment.author.name,
-                        flair: flair,
-                        dateAdded: new Date()
-                    })
-                    // console.log('Inserted:', comment.author_fullname, comment.author.name, flair)
-            } else if (res.flair != flair) {
+                await db.collection('PCM_users').insertOne({ //Add them
+                    id: comment.author_fullname,
+                    name: comment.author.name,
+                    flair: flair,
+                    dateAdded: new Date()
+                })
+            } else if (res.flair != flair) { //User already present in DB and has update their flair!
                 console.log('Flair change!', comment.author_fullname, comment.author.name, 'was', res.flair, 'now is', flair)
-                    //Update, todo
-            } else { //User already present in DB
-                // console.log('Touch some grass:', comment.author_fullname, comment.author.name, flair)
+                await db.collection('PCM_users').updateOne({ id: comment.author_fullname }, { $set: { flair: flair } }, (err, res) => {
+                    if (err) throw err
+
+                    let msg = 'Flair change cringe' //TODO: write quirky and funny
+
+                    if (comment.author_fullname === 't2_105aw2') { //Test line, remove on release (only answers DEV - prevents spam)
+                        console.log('Answering:', comment.body)
+                        comment.reply(msg)
+                    }
+                })
             }
         })
     })()
