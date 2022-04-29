@@ -51,7 +51,7 @@ stream.on('item', comment => {
                 console.log('Flair change!', comment.author_fullname, comment.author.name, 'was', res.flair.at(-1), 'now is', flair)
 
                 let date = new Date(res.dateAdded.at(-1))
-                let dateStr = date.at(-1).getUTCFullYear().toString() + '-' + (date.at(-1).getUTCMonth() + 1).toString() + '-' + date.at(-1).getUTCDate().toString()
+                let dateStr = date.getUTCFullYear().toString() + '-' + (date.getUTCMonth() + 1).toString() + '-' + date.getUTCDate().toString()
                 let msg = `Did you just change your flair, u/${comment.author.name}? Last time I checked you were **${res.at(-1).flair}** on ${dateStr}. How come now you are **${flair}**?  \nHave you perhaps shifted your ideals? Because that's cringe, you know?\n\n*"You have the right to change your mind, as I have the right to shame you for doing so." - Anonymus*\n\n^(Bip) ^(bop,) ^(I) ^(am) ^(a) ^(bot.) ^(Don't) ^(get) ^(too) ^(mad.)`
 
                 // comment.reply(msg) //Let's just avoid this. Add on release
