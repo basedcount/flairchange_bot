@@ -44,19 +44,19 @@ stream.on('item', comment => {
                 await db.collection('PCM_users').insertOne({ //Add them
                     id: comment.author_fullname,
                     name: comment.author.name,
-                    flair: flair,
-                    dateAdded: new Date()
+                    flair: [flair],
+                    dateAdded: [new Date()]
                 })
             } else if (res.flair != flair) { //User already present in DB and has update their flair!
-                console.log('Flair change!', comment.author_fullname, comment.author.name, 'was', res.flair, 'now is', flair)
+                console.log('Flair change!', comment.author_fullname, comment.author.name, 'was', res.flair.at(-1), 'now is', flair)
 
-                let date = new Date(res.dateAdded)
-                let dateStr = date.getUTCFullYear().toString() + '-' + (date.getUTCMonth() + 1).toString() + '-' + date.getUTCDate().toString()
-                let msg = `Did you just change your flair, u/${comment.author.name}? Last time I checked you were **${res.flair}** on ${dateStr}. How come now you are **${flair}**?  \nHave you perhaps shifted your ideals? Because that's cringe, you know?\n\n*"You have the right to change your mind, as I have the right to shame you for doing so." - Anonymus*\n\n^(Bip) ^(bop,) ^(I) ^(am) ^(a) ^(bot.) ^(Don't) ^(get) ^(too) ^(mad.)`
+                let date = new Date(res.dateAdded.at(-1))
+                let dateStr = date.at(-1).getUTCFullYear().toString() + '-' + (date.at(-1).getUTCMonth() + 1).toString() + '-' + date.at(-1).getUTCDate().toString()
+                let msg = `Did you just change your flair, u/${comment.author.name}? Last time I checked you were **${res.at(-1).flair}** on ${dateStr}. How come now you are **${flair}**?  \nHave you perhaps shifted your ideals? Because that's cringe, you know?\n\n*"You have the right to change your mind, as I have the right to shame you for doing so." - Anonymus*\n\n^(Bip) ^(bop,) ^(I) ^(am) ^(a) ^(bot.) ^(Don't) ^(get) ^(too) ^(mad.)`
 
                 // comment.reply(msg) //Let's just avoid this. Add on release
 
-                await db.collection('PCM_users').updateOne({ id: comment.author_fullname }, { $set: { flair: flair, dateAdded: new Date() } }, (err, res) => {
+                await db.collection('PCM_users').updateOne({ id: comment.author_fullname }, { $push: { flair: flair, dateAdded: new Date() } }, (err, res) => {
                     if (err) throw err
                 })
             }
