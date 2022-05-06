@@ -1,2 +1,2 @@
 use('flairChangeBot')
-db.PCM_users.find()
+db.PCM_users.find().toArray()
