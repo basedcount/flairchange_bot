@@ -67,7 +67,7 @@ stream.on('item', comment => {
                 let msg = `Did you just change your flair, u/${comment.author.name}? Last time I checked you were **${res.flair.at(-1)}** on ${dateStr}. How come now you are **${flair}**?  \nHave you perhaps shifted your ideals? Because that's cringe, you know?\n\n*"You have the right to change your mind, as I have the right to shame you for doing so." - Anonymus*\n\n^(Bip bop, I am a bot; don't get too mad. If you want to opt-out write) **^(!cringe)** ^(in a comment)`
 
                 if (!res.optOut) { //If user did not opt out send message - push to DB either way tho
-                    // comment.reply(msg) //Let's just avoid this. Add on release
+                    comment.reply(msg) //HERE'S WHERE THE MAGIC HAPPENS - let's bother some people
                 } else {
                     console.log('Tried answering but user', comment.author.name, 'opted out')
                 }
