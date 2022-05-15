@@ -27,6 +27,8 @@ const stream = new CommentStream(r, {
 client.connect()
 const db = client.db('flairChangeBot');
 
+const optOutMsg = "You are both cringe and a coward. But fine, let's have it your way. I'll stop calling you out."
+
 console.log('Starting up...')
 stream.on('item', comment => {
     let flair = comment.author_flair_text
@@ -43,6 +45,8 @@ stream.on('item', comment => {
 
             if (res === null) { //User not present in DB
                 if (comment.body === '!cringe') { //If user asked for an opt out (as a first message ever on the sub, unlikely)
+                    console.log('Opt-out:', comment.author.name)
+                    comment.reply(optOutMsg) //opt out reply message
                     await db.collection('PCM_users').insertOne({ //Add them + optOut
                         id: comment.author_fullname,
                         name: comment.author.name,
@@ -77,13 +81,20 @@ stream.on('item', comment => {
                 })
 
                 if (comment.body === '!cringe') { //If user asked for an opt out (whilst getting called out for changing flair, unlikely)
-                    console.log('Opt-out:', comment.author.name)
-                    await db.collection('PCM_users').updateOne({ id: comment.author_fullname }, { $set: { optOut: true } })
+                    if (!res.optOut) { //Only reply if user hasn't already opted out
+                        console.log('Opt-out:', comment.author.name)
+                        comment.reply(optOutMsg) //opt out reply message
+                        await db.collection('PCM_users').updateOne({ id: comment.author_fullname }, { $set: { optOut: true } })
+                    }
+
                 }
             } else { //Default case
                 if (comment.body === '!cringe') { //If user has opted out in generic comment, likely
-                    console.log('Opt-out:', comment.author.name)
-                    await db.collection('PCM_users').updateOne({ id: comment.author_fullname }, { $set: { optOut: true } })
+                    if (!res.optOut) { //Only reply if user hasn't already opted out
+                        console.log('Opt-out:', comment.author.name)
+                        comment.reply(optOutMsg) //opt out reply message
+                        await db.collection('PCM_users').updateOne({ id: comment.author_fullname }, { $set: { optOut: true } })
+                    }
                 }
             }
         })
