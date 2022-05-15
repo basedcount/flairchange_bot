@@ -1,2 +1,0 @@
-use('flairChangeBot')
-db.PCM_users.find({optOut: true}, { _id: 0}).toArray()

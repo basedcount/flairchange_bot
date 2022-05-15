@@ -1,2 +1,0 @@
-use('flairChangeBot')
-db.PCM_users.countDocuments()
