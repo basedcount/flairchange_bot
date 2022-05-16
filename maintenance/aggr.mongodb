@@ -1,0 +1,27 @@
+const aggr = [
+	{ 
+		$set: { 
+			size: {
+				$size: '$flair'
+			} 
+		} 
+	}, {
+		$setWindowFields: {
+			sortBy: { 
+				size: -1 
+			},
+			output: { 
+				position: { 
+					$rank: {} 
+				} 
+			}
+		}
+	}, {
+		$project: {
+			_id: 0, 
+			optOut: 0
+		}
+	}
+]
+
+db.PCM_users.aggregate(aggr)

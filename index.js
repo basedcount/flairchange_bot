@@ -21,7 +21,7 @@ const stream = new CommentStream(r, {
     subreddit: 'PoliticalCompassMemes',
     results: 1
         /*,
-             pollTime: 5000*/ //Add this line if reddit api seems slow
+            pollTime: 5000*/ //Add this line if reddit api seems slow
 });
 
 client.connect()
@@ -32,6 +32,33 @@ const optOutMsg = "You are both cringe and a coward. But fine, let's have it you
 console.log('Starting up...')
 stream.on('item', comment => {
     let flair = comment.author_flair_text
+    const aggr = [{
+        $set: {
+            size: {
+                $size: '$flair'
+            }
+        }
+    }, {
+        $setWindowFields: {
+            sortBy: {
+                size: -1
+            },
+            output: {
+                position: {
+                    $rank: {}
+                }
+            }
+        }
+    }, {
+        $project: {
+            _id: 0,
+            optOut: 0
+        }
+    }, {
+        $match: {
+            id: comment.author_fullname
+        }
+    }]
 
     if (flair != null) { //If user is NOT unflaired, parse the flair and save it correctly
         flair = flair.substring(flair.indexOf('-') + 2)
@@ -40,6 +67,9 @@ stream.on('item', comment => {
     }
 
     (async() => {
+        let aggEntry
+        await db.collection('PCM_users').aggregate(aggr).forEach(log => { aggEntry = log }) //Running aggregation query for current user - necessary for flair changers ranking
+
         db.collection('PCM_users').findOne({ id: comment.author_fullname }, async(err, res) => { //Check for any already present occurrence
             if (err) throw err
 
@@ -71,6 +101,11 @@ stream.on('item', comment => {
                 let msg = `Did you just change your flair, u/${comment.author.name}? Last time I checked you were **${res.flair.at(-1)}** on ${dateStr}. How come now you are **${flair}**?  \nHave you perhaps shifted your ideals? Because that's cringe, you know?\n\n*"You have the right to change your mind, as I have the right to shame you for doing so." - Anonymus*\n\n^(Bip bop, I am a bot; don't get too mad. If you want to opt-out write) **^(!cringe)** ^(in a comment)`
 
                 if (!res.optOut) { //If user did not opt out send message - push to DB either way tho
+                    if (res.id === aggEntry.id && aggEntry.position <= 10) { //Touch grass message, for multiple flair changers
+                        let ratingN = card2ord(aggEntry.position) //Get ordinal number - not for largest
+                        msg = `Did you just change your flair, u/${comment.author.name}? Last time I checked you were **${res.flair.at(-1)}** on ${dateStr}. How come now you are **${flair}**?  \nHave you perhaps shifted your ideals? Because that's cringe, you know?\n\nOh and by the way. You have already changed your flair ${aggEntry.size} times, making you the ${ratingN} largest flair changer in this sub.\nGo touch some fucking grass.\n\n*"You have the right to change your mind, as I have the right to shame you for doing so." - Anonymus*\n\n^(Bip bop, I am a bot; don't get too mad. If you want to opt-out write) **^(!cringe)** ^(in a comment)`
+                        console.log('Not a grass toucher', comment.author.name)
+                    }
                     comment.reply(msg) //HERE'S WHERE THE MAGIC HAPPENS - let's bother some people
                 } else {
                     console.log('Tried answering but user', comment.author.name, 'opted out')
@@ -102,3 +137,30 @@ stream.on('item', comment => {
 })
 
 client.close()
+
+function card2ord(param) {
+    switch (param) {
+        case 1:
+            return ''
+        case 2:
+            return 'second'
+        case 3:
+            return 'third'
+        case 4:
+            return 'fourth'
+        case 5:
+            return 'fifth'
+        case 6:
+            return 'sixth'
+        case 7:
+            return 'seventh'
+        case 8:
+            return 'eighth'
+        case 9:
+            return 'ninth'
+        case 10:
+            return 'tenth'
+        default:
+            return `number ${param}`
+    }
+}
