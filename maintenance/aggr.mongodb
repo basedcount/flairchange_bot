@@ -18,8 +18,7 @@ const aggr = [
 		}
 	}, {
 		$project: {
-			_id: 0, 
-			optOut: 0
+			_id: 0
 		}
 	}
 ]

@@ -74,7 +74,7 @@ stream.on('item', comment => {
             if (err) throw err
 
             if (res === null) { //User not present in DB
-                if (comment.body === '!cringe') { //If user asked for an opt out (as a first message ever on the sub, unlikely)
+                if (comment.body.includes('!cringe') && comment.author_fullname != 't2_mdgp6gdr') { //If user asked for an opt out (as a first message ever on the sub, unlikely)
                     console.log('Opt-out:', comment.author.name)
                     comment.reply(optOutMsg) //opt out reply message
                     await db.collection('PCM_users').insertOne({ //Add them + optOut
@@ -97,7 +97,7 @@ stream.on('item', comment => {
                 console.log('Flair change!', comment.author.name, 'was', res.flair.at(-1), 'now is', flair)
 
                 let date = new Date(res.dateAdded.at(-1))
-                let dateStr = date.getUTCFullYear().toString() + '-' + (date.getUTCMonth() + 1).toString() + '-' + date.getUTCDate().toString()
+                let dateStr = date.getUTCFullYear().toString() + '-' + (date.getUTCMonth() + 1).toString() + '-' + date.getUTCDate().toString() //Composing date using UTC timezone
                 let msg = `Did you just change your flair, u/${comment.author.name}? Last time I checked you were **${res.flair.at(-1)}** on ${dateStr}. How come now you are **${flair}**?  \nHave you perhaps shifted your ideals? Because that's cringe, you know?\n\n*"You have the right to change your mind, as I have the right to shame you for doing so." - Anonymus*\n\n^(Bip bop, I am a bot; don't get too mad. If you want to opt-out write) **^(!cringe)** ^(in a comment)`
 
                 if (!res.optOut) { //If user did not opt out send message - push to DB either way tho
@@ -115,7 +115,7 @@ stream.on('item', comment => {
                     if (err) throw err
                 })
 
-                if (comment.body === '!cringe') { //If user asked for an opt out (whilst getting called out for changing flair, unlikely)
+                if (comment.body.includes('!cringe') && comment.author_fullname != 't2_mdgp6gdr') { //If user asked for an opt out (whilst getting called out for changing flair, unlikely)
                     if (!res.optOut) { //Only reply if user hasn't already opted out
                         console.log('Opt-out:', comment.author.name)
                         comment.reply(optOutMsg) //opt out reply message
@@ -124,7 +124,7 @@ stream.on('item', comment => {
 
                 }
             } else { //Default case
-                if (comment.body === '!cringe') { //If user has opted out in generic comment, likely
+                if (comment.body.includes('!cringe') && comment.author_fullname != 't2_mdgp6gdr') { //If user has opted out in generic comment, likely
                     if (!res.optOut) { //Only reply if user hasn't already opted out
                         console.log('Opt-out:', comment.author.name)
                         comment.reply(optOutMsg) //opt out reply message
@@ -135,8 +135,6 @@ stream.on('item', comment => {
         })
     })()
 })
-
-client.close()
 
 function card2ord(param) {
     switch (param) {
