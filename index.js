@@ -106,14 +106,19 @@ stream.on('item', comment => {
                 if (!res.optOut && now.valueOf() > res.dateAdded.at(-1).valueOf() + delayMS) { //If user did not opt out and isn't spamming, send message - push to DB either way tho. SPAM: if bot has written to the same user in the last DELAY minutes
                     if (res.id === aggEntry.id && aggEntry.position <= 10) { //Touch grass message, for multiple flair changers
                         let ratingN = card2ord(aggEntry.position) //Get ordinal number - not for largest
+
                         msg = `Did you just change your flair, u/${comment.author.name}? Last time I checked you were **${res.flair.at(-1)}** on ${dateStr}. How come now you are **${flair}**?  \nHave you perhaps shifted your ideals? Because that's cringe, you know?\n\nOh and by the way. You have already changed your flair ${aggEntry.size} times, making you the ${ratingN} largest flair changer in this sub.\nGo touch some fucking grass.\n\n*"You have the right to change your mind, as I have the right to shame you for doing so." - Anonymus*\n\n^(Bip bop, I am a bot; don't get too mad. If you want to opt-out write) **^(!cringe)** ^(in a comment)`
                         console.log('Not a grass toucher', comment.author.name)
                     }
-                    comment.reply(msg) //HERE'S WHERE THE MAGIC HAPPENS - let's bother some people
-                } else {
-                    console.log('Tried answering but user', comment.author.name, 'opted out')
-                }
 
+                    comment.reply(msg) //HERE'S WHERE THE MAGIC HAPPENS - let's bother some people
+                } else if (res.optOut) {
+                    console.log('Tried answering but user', comment.author.name, 'opted out')
+
+                } else if (now.valueOf() <= res.dateAdded.at(-1).valueOf() + delayMS) {
+                    console.log('Tried answering but user', comment.author.name, 'is spamming')
+
+                }
                 db.collection('PCM_users').updateOne({ id: comment.author_fullname }, { $push: { flair: flair, dateAdded: new Date() } }, (err, res) => {
                     if (err) throw err
                 })
