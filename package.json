@@ -24,6 +24,7 @@
     "dependencies": {
         "dotenv": "^16.0.0",
         "mongodb": "^4.5.0",
+        "node-cron": "^3.0.0",
         "snoostorm": "^1.5.2",
         "snoowrap": "^1.23.0"
     }
