@@ -34,7 +34,7 @@ client.connect()
 const db = client.db('flairChangeBot');
 
 console.log('Starting up...');
-cron.schedule('* * *', () => { //Task executed every day, UTC timezone
+cron.schedule('0 0 * * *', () => { //Task executed every day, UTC timezone
     wallOfShame(db)
 }, {
     timezone: 'UTC'
