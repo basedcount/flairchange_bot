@@ -61,7 +61,12 @@ stream.on('item', comment => {
     }]
 
     if (flair != null) { //If user is NOT unflaired, parse the flair and save it correctly
-        flair = flair.substring(flair.indexOf('-') + 2)
+        if (comment.author_flair_richtext[0].a.slice(1, -1) === 'CENTG') //Handles alt flairs
+            flair = 'GreyCentrist'
+        else if (comment.author_flair_richtext[0].a.slice(1, -1) === 'libright2')
+            flair = 'PurpleLibRight'
+        else //Default case
+            flair = flair.substring(flair.indexOf('-') + 2)
     } else { //User is unflaired, no need to lose my time here
         return
     }
@@ -107,8 +112,11 @@ stream.on('item', comment => {
                         msg = `Did you just change your flair, u/${comment.author.name}? Last time I checked you were **${res.flair.at(-1)}** on ${dateStr}. How come now you are **${flair}**?  \nHave you perhaps shifted your ideals? Because that's cringe, you know?\n\nOh and by the way. You have already changed your flair ${aggEntry.size} times, making you the ${ratingN} largest flair changer in this sub.\nGo touch some fucking grass.\n\n*"You have the right to change your mind, as I have the right to shame you for doing so." - Anonymus*\n\n^(Bip bop, I am a bot; don't get too mad. If you want to opt-out write) **^(!cringe)** ^(in a comment)`
                         console.log('Not a grass toucher', comment.author.name)
                     }
-
-                    comment.reply(msg) //HERE'S WHERE THE MAGIC HAPPENS - let's bother some people
+                    if ((res.flair.at(-1) == 'Centrist' && flair == 'GreyCentrist') || (res.flair.at(-1) == 'LibRight' && flair == 'PurpleLibRight')) { //GRACE, remove on later update
+                        console.log('Graced', comment.author.name)
+                    } else {
+                        comment.reply(msg) //HERE'S WHERE THE MAGIC HAPPENS - let's bother some people
+                    }
                 } else if (res.optOut) {
                     console.log('Tried answering but user', comment.author.name, 'opted out')
 
