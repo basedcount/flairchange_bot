@@ -35,28 +35,21 @@ const db = client.db('flairChangeBot');
 
 console.log('Starting up...');
 cron.schedule('0 0 * * *', () => { //Task executed every day, UTC timezone
-    wallOfShame(db)
+    wallOfShame(db) //Updates Wall of shame instantly
+    setTimeout(() => { //Updates leaderboard after 10 seconds, avoids RATELIMIT
+        leaderboard(db)
+    }, 10000)
 }, {
     timezone: 'UTC'
 });
 stream.on('item', comment => {
     let flair = comment.author_flair_text
-    const aggr = [{
-        $set: {
-            size: {
-                $size: '$flair'
-            }
-        }
+    const aggr = [{ //MongoDB aggregation pipeline, gets leaderboard position (if any)
+        $set: { size: { $size: '$flair' } }
     }, {
         $setWindowFields: {
-            sortBy: {
-                size: -1
-            },
-            output: {
-                position: {
-                    $rank: {}
-                }
-            }
+            sortBy: { size: -1 },
+            output: { position: { $rank: {} } }
         }
     }, {
         $project: {
@@ -64,9 +57,7 @@ stream.on('item', comment => {
             optOut: 0
         }
     }, {
-        $match: {
-            id: comment.author_fullname
-        }
+        $match: { id: comment.author_fullname }
     }]
 
     if (flair != null) { //If user is NOT unflaired, parse the flair and save it correctly
@@ -182,13 +173,45 @@ async function wallOfShame(db) {
 
     console.log('Updating Wall of shame')
 
-    cursor = db.collection('PCM_users').find({ optOut: true }, { sort: { _id: 1 }, projection: { _id: 0, dateAdded: 0, id: 0, optOut: 0 } })
+    cursor = db.collection('PCM_users').find({ optOut: true }, { sort: { _id: 1 }, projection: { _id: 0, dateAdded: 0, id: 0, optOut: 0 } }) //Run query, returns a cursor (see MongoDB docs)
     await cursor.forEach(item => {
         if (item.flair.length - 1 == 1)
-            msg += `${item.name}\xa0\xa0\xa0-\xa0\xa0\xa0${item.flair.length-1} flair change\n\n`
+            msg += `- ${item.name}\xa0\xa0\xa0-\xa0\xa0\xa0${item.flair.length-1} flair change\n\n`
         else
-            msg += `${item.name}\xa0\xa0\xa0-\xa0\xa0\xa0${item.flair.length-1} flair changes\n\n`
+            msg += `- ${item.name}\xa0\xa0\xa0-\xa0\xa0\xa0${item.flair.length-1} flair changes\n\n`
     })
-    msg += '\n*This post is automatically updated every day at midnight UTC.* more text'
-    r.getSubmission('utwvvg').edit(msg)
+    msg += '\n*This post is automatically updated every day at midnight UTC.*'
+    r.getSubmission('utwvvg').edit(msg) //Update post
+}
+
+async function leaderboard(db) {
+    let msg = 'This is the leaderboard of the most frequent flair changers of r/PoliticalCompassMemes. If your name appears on this list please turn off your computer and go touch some grass. \n\n'
+    const aggr = [{
+        $set: { size: { $size: '$flair' } }
+    }, {
+        $setWindowFields: {
+            sortBy: { size: -1 },
+            output: { position: { $rank: {} } }
+        }
+    }, {
+        $project: {
+            _id: 0,
+            id: 0,
+            optOut: 0,
+            dateAdded: 0
+        }
+    }, {
+        $match: { size: { $gt: 3 } } //Pruning, doesn't consider non-flair changers or unfrequent changers
+    }]
+    console.log('Updating Leaderboard')
+
+    cursor = db.collection('PCM_users').aggregate(aggr) //Run query, returns a cursor (see MongoDB docs)
+    i = 0 //counter needs to be implemented manually, cursor.forEach != array.forEach
+    await cursor.forEach(item => {
+        if (i >= 20) return //Only show the top 20 (from 0 to 19)
+        i++
+        msg += `${i}) ${item.name}\xa0\xa0\xa0-\xa0\xa0\xa0${item.size-1} flair changes\n\n`
+    })
+    msg += '\n*This post is automatically updated every day at midnight UTC.*'
+    await r.getSubmission('uuhlu2').edit(msg) //Update post
 }
