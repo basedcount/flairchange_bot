@@ -103,7 +103,7 @@ stream.on('item', comment => {
                 let now = new Date()
                 let date = new Date(res.dateAdded.at(-1))
                 let dateStr = date.getUTCFullYear().toString() + '-' + (date.getUTCMonth() + 1).toString() + '-' + date.getUTCDate().toString() //Composing date using UTC timezone
-                let msg = `Did you just change your flair, u/${comment.author.name}? Last time I checked you were **${res.flair.at(-1)}** on ${dateStr}. How come now you are **${flair}**? Have you perhaps shifted your ideals? Because that's cringe, you know?\n\n*"You have the right to change your mind, as I have the right to shame you for doing so." - Anonymus*\n\n^(Bip bop, I am a bot; don't get too mad. If you want to opt-out write) **^(!cringe)** ^(in a comment)`
+                let msg = `Did you just change your flair, u/${comment.author.name}? Last time I checked you were **${res.flair.at(-1)}** on ${dateStr}. How come now you are **${flair}**? Have you perhaps shifted your ideals? Because that's cringe, you know?\n\n*"You have the right to change your mind, as I have the right to shame you for doing so." - Anonymous*\n\n^(Bip bop, I am a bot; don't get too mad. If you want to opt-out write) **^(!cringe)** ^(in a comment)`
 
                 if (!res.optOut && now.valueOf() > res.dateAdded.at(-1).valueOf() + delayMS) { //If user did not opt out and isn't spamming, send message - push to DB either way tho. SPAM: if bot has written to the same user in the last DELAY minutes
                     if (res.id === aggEntry.id && aggEntry.position <= 10) { //Touch grass message, for multiple flair changers
