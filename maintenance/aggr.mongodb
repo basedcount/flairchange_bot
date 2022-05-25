@@ -1,24 +1,18 @@
 const aggr = [
-	{ 
-		$set: { 
-			size: {
-				$size: '$flair'
-			} 
-		} 
-	}, {
-		$setWindowFields: {
-			sortBy: { 
-				size: -1 
-			},
-			output: { 
-				position: { 
-					$rank: {} 
-				} 
-			}
-		}
-	}, {
+	 {
 		$project: {
-			_id: 0
+			_id: 0, 
+			optOut: 0
+		}
+	}, { 
+		$set: { size: { $size: '$flair' } } 
+	}, {
+		$match: { size: { $gt: 3},
+			flair: { $nin: ['None'] }
+		}
+	},{
+		$setWindowFields: { sortBy: { size: -1 },
+			output: { position: { $rank: {} } }
 		}
 	}
 ]

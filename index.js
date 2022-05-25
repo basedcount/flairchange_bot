@@ -47,16 +47,21 @@ cron.schedule('0 0 * * *', () => { //Task executed every day, UTC timezone
 stream.on('item', comment => {
     let flair = comment.author_flair_text
     const aggr = [{ //MongoDB aggregation pipeline, gets leaderboard position (if any)
+        $project: {
+            _id: 0,
+            optOut: 0
+        }
+    }, {
         $set: { size: { $size: '$flair' } }
+    }, {
+        $match: {
+            size: { $gt: 3 },
+            flair: { $nin: ['None'] }
+        }
     }, {
         $setWindowFields: {
             sortBy: { size: -1 },
             output: { position: { $rank: {} } }
-        }
-    }, {
-        $project: {
-            _id: 0,
-            optOut: 0
         }
     }, {
         $match: { id: comment.author_fullname }
@@ -112,13 +117,15 @@ stream.on('item', comment => {
                 let msg = `Did you just change your flair, u/${comment.author.name}? Last time I checked you were **${res.flair.at(-1)}** on ${dateStr}. How come now you are **${flair}**? Have you perhaps shifted your ideals? Because that's cringe, you know?\n\n*"You have the right to change your mind, as I have the right to shame you for doing so." - Anonymous*\n\n ^(I am a bot. If you want to opt-out write) **^(!cringe)** ^(in a comment. If you want to check another user's flair history write) **^(!flairs u/<name>)** ^(in a comment.)`
 
                 if (!res.optOut && now.valueOf() > res.dateAdded.at(-1).valueOf() + delayMS) { //If user did not opt out and isn't spamming, send message, push to DB. Doesn't push if user is spamming. SPAM: if bot has written to the same user in the last DELAY minutes
-                    if (res.id === aggEntry.id && aggEntry.position <= 10) { //Touch grass message, for multiple flair changers
-                        let ratingN = card2ord(aggEntry.position) //Get ordinal number - not for largest
 
-                        let msg = `Did you just change your flair, u/${comment.author.name}? Last time I checked you were **${res.flair.at(-1)}** on ${dateStr}. How come now you are **${flair}**? Have you perhaps shifted your ideals? Because that's cringe, you know?\n\nOh and by the way. You have already changed your flair ${aggEntry.size} times, making you the ${ratingN} largest flair changer in this sub.\nGo touch some fucking grass.\n\n*"You have the right to change your mind, as I have the right to shame you for doing so." - Anonymous*\n\n ^(I am a bot. If you want to opt-out write) **^(!cringe)** ^(in a comment. If you want to check another user's flair history write) **^(!flairs u/<name>)** ^(in a comment.)`
-                        console.log('Not a grass toucher', comment.author.name)
+                    if (aggEntry != null) { //Touch grass message, for multiple flair changers, only if user is in the top (if entire collection is returned DB crashes!)
+                        if (res.id === aggEntry.id && aggEntry.position <= 10) {
+                            let ratingN = card2ord(aggEntry.position) //Get ordinal number - not for largest
+
+                            msg = `Did you just change your flair, u/${comment.author.name}? Last time I checked you were **${res.flair.at(-1)}** on ${dateStr}. How come now you are **${flair}**? Have you perhaps shifted your ideals? Because that's cringe, you know?\n\nOh and by the way. You have already changed your flair ${aggEntry.size} times, making you the ${ratingN} largest flair changer in this sub.\nGo touch some fucking grass.\n\n*"You have the right to change your mind, as I have the right to shame you for doing so." - Anonymous*\n\n ^(I am a bot. If you want to opt-out write) **^(!cringe)** ^(in a comment. If you want to check another user's flair history write) **^(!flairs u/<name>)** ^(in a comment.)`
+                            console.log('Not a grass toucher', comment.author.name)
+                        }
                     }
-
                     if ((res.flair.at(-1) == 'Centrist' && flair == 'GreyCentrist') || (res.flair.at(-1) == 'LibRight' && flair == 'PurpleLibRight')) { //GRACE, remove on later update. If graced still pushes to DB (ofc)
                         db.collection('PCM_users').updateOne({ id: comment.author_fullname }, { $push: { flair: flair, dateAdded: new Date() } }, (err, res) => {
                             if (err) throw err
@@ -211,22 +218,28 @@ async function wallOfShame(db) {
 async function leaderboard(db) {
     let msg = 'This is the leaderboard of the most frequent flair changers of r/PoliticalCompassMemes. If your name appears on this list please turn off your computer and go touch some grass. \n\n'
     const aggr = [{
-        $set: { size: { $size: '$flair' } }
-    }, {
-        $setWindowFields: {
-            sortBy: { size: -1 },
-            output: { position: { $rank: {} } }
+            $project: {
+                _id: 0,
+                id: 0,
+                optOut: 0,
+                dateAdded: 0
+            }
+        }, {
+            $set: { size: { $size: '$flair' } }
+        },
+        {
+            $match: {
+                size: { $gt: 3 }, //Pruning, doesn't consider non-flair changers, unfrequent changers or unflaired
+                flair: { $nin: ['None'] }
+            }
+        }, {
+            $setWindowFields: {
+                sortBy: { size: -1 },
+                output: { position: { $rank: {} } }
+            }
         }
-    }, {
-        $project: {
-            _id: 0,
-            id: 0,
-            optOut: 0,
-            dateAdded: 0
-        }
-    }, {
-        $match: { size: { $gt: 3 } } //Pruning, doesn't consider non-flair changers or unfrequent changers
-    }]
+    ]
+
     console.log('Updating Leaderboard')
 
     cursor = db.collection('PCM_users').aggregate(aggr) //Run query, returns a cursor (see MongoDB docs)
