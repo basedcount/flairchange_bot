@@ -1,0 +1,11 @@
+//Expected 11 flairs: 4 quadrants, 4 hybrids, 2 centrists, 1 alt libright
+
+const aggr = [{$project: {
+  _id: 0,
+  flair: 1,
+  name: 1
+}}, {$unwind: "$flair"}, {$group: {
+  _id: "$flair"
+}}]
+
+db.PCM_users.aggregate(aggr)
