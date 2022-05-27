@@ -294,7 +294,10 @@ async function summonListFlairs(comment, db) {
     msg += username
 
     log = await db.collection('PCM_users').findOne({ name: username }) //Run query, search for provided username
-    if (log.flair.length > 1) { //Compose the message
+    if (log == null) {
+        console.log('Tried answering but user', comment.author.name, 'didn\'t enter an indexed username')
+        return false
+    } else if (log.flair.length > 1) { //Compose the message
         msg += ` changed their flair ${log.flair.length} times. This makes them unbelievably cringe.`
     } else {
         msg += ' never changed their flair.'
