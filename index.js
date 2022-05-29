@@ -45,7 +45,6 @@ function run() {
     })
 
     stream.on('item', comment => {
-        if (comment == undefined) return //No clue why this happens. Probably insta-deleted comments
         if (comment.author_fullname == 't2_mdgp6gdr') return //Comment made by the bot itself, no time to lose here
 
         let flair = comment.author_flair_text
@@ -153,6 +152,8 @@ async function flairChangeUnflaired(comment, res) {
 
 //Sends a random message reminding users to flair up. Only answers in 1/'dice' cases
 function unflaired(comment) {
+    if (comment == undefined) return //No clue why this happens. Probably insta-deleted comments
+
     let rand = Math.floor(Math.random() * noFlair.length)
 
     if (dice(4)) {
