@@ -45,6 +45,7 @@ function run() {
     })
 
     stream.on('item', comment => {
+        if (comment == undefined) return //No clue why this happens. Probably insta-deleted comments
         if (comment.author_fullname == 't2_mdgp6gdr') return //Comment made by the bot itself, no time to lose here
 
         let flair = comment.author_flair_text
