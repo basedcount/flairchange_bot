@@ -68,19 +68,17 @@ function run() {
                 if (flair === null && res === null) { //Unflaired and not in DB
                     unflaired()
                     return
-                } else if (flair === null && res.flair.at(-1) != flair) { //Is in DB but switched to unflaired
-                    flairChangeUnflaired(comment, res)
                 } else if (res === null) { //Flaired, not in DB
                     if (comment.body.includes('!cringe')) {
-                        optOut(comment, res, db, 1)
+                        optOut(comment, res, db, 1) //Context 1 handles the new user inserction
                     } else {
-                        await db.collection('PCM_users').insertOne({
-                            id: comment.author_fullname,
-                            name: comment.author.name,
-                            flair: [flair],
-                            dateAdded: [new Date()]
-                        })
+                        newUser(comment, db, flair)
                     }
+                } else if (flair === null && res.unflaired) { //Unflaired, is in DB and is a registered unflaired
+                    unflaired()
+                    return
+                } else if (flair === null && res.flair.at(-1) != flair) { //Is in DB but switched to unflaired
+                    flairChangeUnflaired(comment, res, db)
                 } else if (res.flair.at(-1) != flair) { //Already present in DB and flair change
                     flairChange(comment, db, flair, res)
                 } else { //Generic comment
@@ -135,9 +133,14 @@ async function flairChange(comment, db, flair, res) {
     } else if (isSpam(res)) { //Spam. Doesn't push to DB
         console.log('Tried answering but user', comment.author.name, 'is spamming')
     }
+
+    if (res.unflaired) { //User was flagged as unflaired
+        await db.collection('PCM_users').updateOne({ id: res.id }, { $unset: { unflaired: true } })
+    }
 }
 
-async function flairChangeUnflaired(comment, res) {
+//Detects changes from any flair to unflaired. Toggles the 'unflaired' attribute in the DB
+async function flairChangeUnflaired(comment, res, db) {
     console.log('Flair change!', comment.author.name, 'was', res.flair.at(-1), 'now is UNFLAIRED')
 
     let dateStr = getDateStr(res.dateAdded.at(-1))
@@ -148,6 +151,18 @@ async function flairChangeUnflaired(comment, res) {
     } else {
         console.log('Tried answering but user', comment.author.name, 'opted out')
     }
+
+    await db.collection('PCM_users').updateOne({ id: res.id }, { $set: { unflaired: true } })
+}
+
+//Pushes a new user to the DB
+async function newUser(comment, db, flair) {
+    await db.collection('PCM_users').insertOne({
+        id: comment.author_fullname,
+        name: comment.author.name,
+        flair: [flair],
+        dateAdded: [new Date()]
+    })
 }
 
 //Sends a random message reminding users to flair up. Only answers in 1/'dice' cases
