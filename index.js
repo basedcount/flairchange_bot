@@ -112,9 +112,9 @@ async function flairChange(comment, db, flair, res) {
 
                 msg = getGrass(comment.author.name, res.flair.at(-1), dateStr, flair, aggEntry.size, ratingN)
                 console.log('Not a grass toucher', comment.author.name)
-            } else {
-                msg = getFlair(comment.author.name, res.flair.at(-1), dateStr, flair)
             }
+        } else { //Regular message
+            msg = getFlair(comment.author.name, res.flair.at(-1), dateStr, flair)
         }
         if ((res.flair.at(-1) == 'Centrist' && flair == 'GreyCentrist') || (res.flair.at(-1) == 'LibRight' && flair == 'PurpleLibRight')) { //GRACE, remove on later update. If graced still pushes to DB (ofc)
             db.collection('PCM_users').updateOne({ id: comment.author_fullname }, { $push: { flair: flair, dateAdded: new Date() } }, (err, res) => {
