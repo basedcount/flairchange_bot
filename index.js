@@ -1,8 +1,11 @@
 require('dotenv').config()
 const uri = process.env.MONGODB_URI
+
 const leaderboardPipe = require('./modules/leaderboard')
-let leaderboardPosPipe = require('./modules/leaderboardPos')
+const leaderboardPos = require('./modules/leaderboardPos')
 const noFlair = require('./modules/unflaired')
+const ngbr = require('./modules/neighbour')
+const { getFlair, getGrass, getUnflaired, getOptOut, getFlairListFooter } = require('./modules/strings')
 
 const { CommentStream } = require('snoostorm')
 const cron = require('node-cron')
@@ -96,22 +99,21 @@ async function flairChange(comment, db, flair, res) {
     console.log('Flair change!', comment.author.name, 'was', res.flair.at(-1), 'now is', flair)
 
     let dateStr = getDateStr(res.dateAdded.at(-1))
-    let msg = `Did you just change your flair, u/${comment.author.name}? Last time I checked you were **${res.flair.at(-1)}** on ${dateStr}. How come now you are **${flair}**? Have you perhaps shifted your ideals? Because that's cringe, you know?\n\n*"You have the right to change your mind, as I have the right to shame you for doing so." - Anonymous*\n\n ^(I am a bot. If you want to opt-out write) **^(!cringe)** ^(in a comment. If you want to check another user's flair history write) **^(!flairs u/<name>)** ^(in a comment.)`
-
+    let msg
     let aggEntry //Resulting entry from aggregation pipeline
-    leaderboardPosPipe[4] = {
-        $match: { id: comment.author_fullname } //Customizes the aggregation pipeline, filtering for this single user
-    }
+    let leaderboardPosPipe = leaderboardPos(comment.author_fullname)
 
     await db.collection('PCM_users').aggregate(leaderboardPosPipe).forEach(log => { aggEntry = log }) //Running aggregation query for current user - necessary for flair changers ranking
 
     if (!res.optOut && !isSpam(res)) { //If user did not opt out and isn't spamming, send message, push to DB. Doesn't push if user is spamming. SPAM: if bot has written to the same user in the last DELAY minutes
         if (aggEntry != null) { //Touch grass message, for multiple flair changers, only if user is in the top (if entire collection is returned DB crashes!)
-            if (res.id === aggEntry.id && aggEntry.position <= 10) {
+            if (res.id === aggEntry.id && aggEntry.position <= 10) { //test possible redundancy res.id already known, $match DEV TODO
                 let ratingN = card2ord(aggEntry.position) //Get ordinal number ('second', 'third'...)
 
-                msg = `Did you just change your flair, u/${comment.author.name}? Last time I checked you were **${res.flair.at(-1)}** on ${dateStr}. How come now you are **${flair}**? Have you perhaps shifted your ideals? Because that's cringe, you know?\n\nOh and by the way. You have already changed your flair ${aggEntry.size} times, making you the ${ratingN} largest flair changer in this sub.\nGo touch some fucking grass.\n\n*"You have the right to change your mind, as I have the right to shame you for doing so." - Anonymous*\n\n ^(I am a bot. If you want to opt-out write) **^(!cringe)** ^(in a comment. If you want to check another user's flair history write) **^(!flairs u/<name>)** ^(in a comment.)`
+                msg = getGrass(comment.author.name, res.flair.at(-1), dateStr, flair, aggEntry.size, ratingN)
                 console.log('Not a grass toucher', comment.author.name)
+            } else {
+                msg = getFlair(comment.author.name, res.flair.at(-1), dateStr, flair)
             }
         }
         if ((res.flair.at(-1) == 'Centrist' && flair == 'GreyCentrist') || (res.flair.at(-1) == 'LibRight' && flair == 'PurpleLibRight')) { //GRACE, remove on later update. If graced still pushes to DB (ofc)
@@ -144,7 +146,7 @@ async function flairChangeUnflaired(comment, res, db) {
     console.log('Flair change!', comment.author.name, 'was', res.flair.at(-1), 'now is UNFLAIRED')
 
     let dateStr = getDateStr(res.dateAdded.at(-1))
-    msg = `Did you just change your flair, u/${comment.author.name}? Last time I checked you were **${res.flair.at(-1)}** on ${dateStr}. How come now you are **unflaired**? Not only you are a dirty flair changer, you also willingly chose to join those subhumans. \n\nYou are beyond cringe, you are disgusting and deserving of all the downvotes you are going to get. Repent now and pick a new flair before it's too late.\n\n ^(I am a bot. If you want to opt-out write) **^(!cringe)** ^(in a comment. If you want to check another user's flair history write) **^(!flairs u/<name>)** ^(in a comment.)`
+    msg = getUnflaired(comment.author.name, res.flair.at(-1), dateStr)
 
     if (!res.optOut) {
         comment.reply(msg)
@@ -165,6 +167,14 @@ async function newUser(comment, db, flair) {
     })
 }
 
+//Checks wether two flairs are adjacent on the Political Compass. True if near, false if not
+function isNear(oldF, newF) {
+    if (ngbr[oldF].includes(newF))
+        return true
+    else
+        return false
+}
+
 //Sends a random message reminding users to flair up. Only answers in 1/'dice' cases
 function unflaired(comment) {
     if (comment == undefined) return //No clue why this happens. Probably insta-deleted comments
@@ -179,7 +189,7 @@ function unflaired(comment) {
 
 //Handles optOut requests. Params: comment object, result returned from DB query, database object, context: 0: user already present, 1: user not present
 async function optOut(comment, res, db, context) {
-    const optOutMsg = "You are both cringe and a coward. But fine, let's have it your way. I'll stop calling you out."
+    const optOutMsg = getOptOut()
     console.log('Opt-out:', comment.author.name)
 
     if (context == 0) { //Normal case, user is already present in the DB
@@ -320,7 +330,7 @@ async function summonListFlairs(comment, db) {
         }
     })
 
-    msg += `^(I am a bot, my mission is to spot cringe flair changers. You can check a user's history with the) **^( !flairs u/<name>)** ^(command. Each user can use this command once every ${delay} minutes.)` //Footer
+    msg += getFlairListFooter(delay)
 
     comment.reply(msg) //Reply!
 
