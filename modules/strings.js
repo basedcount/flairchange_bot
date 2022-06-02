@@ -29,9 +29,16 @@ function getOptOut() {
     return strings.optOut
 }
 
+//String for footer, summon !flairs u/name
 function getFlairListFooter(delay) {
     let footer = `^(I am a bot, my mission is to spot cringe flair changers. You can check a user's history with the) **^( !flairs u/<name>)** ^(command. Each user can use this command once every ${delay} minutes.)`
     return footer
+}
+
+//String for flair change, small shifts
+function getSmallShift(author, oldfF, newF) {
+    console.log('small shift')
+    return ''
 }
 
 module.exports = {
@@ -39,5 +46,6 @@ module.exports = {
     getGrass,
     getUnflaired,
     getOptOut,
-    getFlairListFooter
+    getFlairListFooter,
+    getSmallShift
 }

@@ -5,7 +5,7 @@ const leaderboardPipe = require('./modules/leaderboard')
 const leaderboardPos = require('./modules/leaderboardPos')
 const noFlair = require('./modules/unflaired')
 const ngbr = require('./modules/neighbour')
-const { getFlair, getGrass, getUnflaired, getOptOut, getFlairListFooter } = require('./modules/strings')
+const { getFlair, getGrass, getUnflaired, getOptOut, getFlairListFooter, getSmallShift } = require('./modules/strings')
 
 const { CommentStream } = require('snoostorm')
 const cron = require('node-cron')
@@ -114,8 +114,13 @@ async function flairChange(comment, db, flair, res) {
                 console.log('Not a grass toucher', comment.author.name)
             }
         } else { //Regular message
-            msg = getFlair(comment.author.name, res.flair.at(-1), dateStr, flair)
+            if (isNear(res.flair.at(-1), flair) && dice(2)) { //If flairs are neighbouring. Only answers a percentage of times (1/2)
+                msg = getSmallShift(comment.author.name, res.flair.at(-1), flair)
+            } else { //Default case
+                msg = getFlair()
+            }
         }
+
         if ((res.flair.at(-1) == 'Centrist' && flair == 'GreyCentrist') || (res.flair.at(-1) == 'LibRight' && flair == 'PurpleLibRight')) { //GRACE, remove on later update. If graced still pushes to DB (ofc)
             db.collection('PCM_users').updateOne({ id: comment.author_fullname }, { $push: { flair: flair, dateAdded: new Date() } }, (err, res) => {
                 if (err) throw err
@@ -340,7 +345,7 @@ async function summonListFlairs(comment, db) {
 //Rolls a dice. Returns true if a random int in [0 - d] is equal to d => 1/d cases
 function dice(d) {
     let rand = Math.floor(Math.random() * d) + 1
-
+    console.log(`\td${d} = ${rand}`) //DEBUG - DEV
     if (d == rand) return true
     else return false
 }
