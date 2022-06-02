@@ -114,10 +114,13 @@ async function flairChange(comment, db, flair, res) {
                 console.log('Not a grass toucher', comment.author.name)
             }
         } else { //Regular message
-            if (isNear(res.flair.at(-1), flair) && dice(2)) { //If flairs are neighbouring. Only answers a percentage of times (1/2)
+            near = isNear(res.flair.at(-1), flair)
+            if (near && dice(2)) { //If flairs are neighbouring. Only answers a percentage of times (1/2)
                 msg = getSmallShift(comment.author.name, res.flair.at(-1), flair)
-            } else { //Default case
+            } else if (!near) { //Default case
                 msg = getFlair()
+            } else { //Dice returned a false value => exits
+                return
             }
         }
 

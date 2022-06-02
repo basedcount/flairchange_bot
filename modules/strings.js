@@ -5,6 +5,20 @@ const strings = {
     optOut: `You are both cringe and a coward. But fine, let's have it your way. I'll stop calling you out.`,
 }
 
+const ins = {
+    AuthRight: "\n\nYeah, yeah we know: 13%, (((them))), [redacted]... Tell us, how are you going to flair the new account you'll make in two weeks?",
+    Right: "generic_right_insult",
+    LibRight: "\n\nAre you mad? Pointing a military grade gun at your monitor won't solve much, pal. Come on, put that rifle down and go take a shower.",
+    PurpleLibRight: "\n\nNow come on, put your pants back on and go outside, you dirty degen.  \nNo, not that way, there's a school over there!",
+    LibCenter: "\n\nWait, those were too many words, I'm sure. Maybe you'll understand this, monkey: \"oo oo aah YOU CRINGE ahah ehe\".",
+    LibLeft: "\n\nDid I offend you/them/xir/whatever? What are you gonna do? Cancel me on twitter?",
+    Left: "generic_left_insult",
+    AuthLeft: "\n\nWhat? You are hungry? You want food? I fear you've chosen the wrong flair, comrade.",
+    AuthCenter: "\n\nThat being said... Based and fellow Auth pilled, welcome home.",
+    Centrist: "\n\nTell us, are you scared of politics in general or are you just too much of a coward to let everyone now what you think?",
+    GreyCentrist: "\n\nActually nevermind, you are good. Not having opinions is still more based than having dumb ones. Happy grilling, brother."
+}
+
 //String for regular flair changes
 function getFlair(author, flairOld, dateStr, flairNew) {
     let intro = `Did you just change your flair, u/${author}? Last time I checked you were **${flairOld}** on ${dateStr}. How come now you are **${flairNew}**?Have you perhaps shifted your ideals? Because that's cringe, you know?`
@@ -36,9 +50,10 @@ function getFlairListFooter(delay) {
 }
 
 //String for flair change, small shifts
-function getSmallShift(author, oldfF, newF) {
-    console.log('small shift')
-    return ''
+function getSmallShift(author, flairOld, dateStr, flairNew) {
+    let intro = `Did you just change your flair, u/${author}? Last time I checked you were **${flairOld}** on ${dateStr}. How come now you are **${flairNew}**?Have you perhaps shifted your ideals? Because that's cringe, you know?`
+
+    return intro + ins[flairNew] + strings.footer
 }
 
 module.exports = {
