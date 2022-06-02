@@ -1,0 +1,18 @@
+const aggrAll = {
+  $or: [{
+    flair: {$all: ['LibRight', 'PurpleLibRight']}
+  }, {
+    flair: {$all: ['Centrist', 'GreyCentrist']}
+  }]
+}
+
+const aggrLil = {
+  $or: [{
+    flair: ['LibRight', 'PurpleLibRight']
+  }, {
+    flair: ['Centrist', 'GreyCentrist']
+  }]
+}
+
+all = db.PCM_users.find(aggrAll).toArray()
+some = db.PCM_users.find(aggrLil).toArray()

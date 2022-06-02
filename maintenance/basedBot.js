@@ -46,13 +46,14 @@ const aggrPipe = [{
             let len = elem.size - 1
 
             if (Bres.flair == 'Grey Centrist' && elem.flair == 'Centrist') {
-                // await db.collection('PCM_users').updateOne({ id: elem.id }, { $push: { flair: 'GreyCentrist', dateAdded: new Date() } })
+                r = await db.collection('PCM_users').updateOne({ name: elem.name }, { $push: { flair: 'GreyCentrist', dateAdded: new Date() } })
                 console.log('Grey', elem.name, len, i)
+                console.log(r)
             } else if (Bres.flair == 'Purple LibRight' && elem.flair == 'LibRight') {
-                // await db.collection('PCM_users').updateOne({ id: elem.id }, { $push: { flair: 'PurpleLibRight', dateAdded: new Date() } })
+                r = await db.collection('PCM_users').updateOne({ name: elem.name }, { $push: { flair: 'PurpleLibRight', dateAdded: new Date() } })
                 console.log('Purple', elem.name, len, i)
+                console.log(r)
             }
-
         }
     });
     // await arr.forEach(async Belem => {
