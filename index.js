@@ -91,8 +91,6 @@ function run() {
                 }
             })
         })()
-    }).catch({ statusCode: 500 }, err => {
-        console.log('EROR: 500', err)
     })
 }
 
