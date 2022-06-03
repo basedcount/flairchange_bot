@@ -69,7 +69,7 @@ function run() {
                 if (err) throw err
 
                 if (flair === null && res === null) { //Unflaired and not in DB
-                    unflaired()
+                    unflaired(comment)
                     return
                 } else if (res === null) { //Flaired, not in DB
                     if (comment.body.includes('!cringe')) {
@@ -78,7 +78,7 @@ function run() {
                         newUser(comment, db, flair)
                     }
                 } else if (flair === null && res.unflaired) { //Unflaired, is in DB and is a registered unflaired
-                    unflaired()
+                    unflaired(comment)
                     return
                 } else if (flair === null && res.flair.at(-1) != flair) { //Is in DB but switched to unflaired
                     flairChangeUnflaired(comment, res, db)
@@ -115,8 +115,13 @@ async function flairChange(comment, db, flair, res) {
             }
         } else { //Regular message
             near = isNear(res.flair.at(-1), flair)
-            if (near && !dice(4)) { //If flairs are neighbouring. Only answers a percentage of times (1/4), ends every other time 
+            if (near && !dice(4)) { //If flairs are neighbouring. Only answers a percentage of times (1/4), ends every other time
+                console.log('Neighbour')
                 return
+            } else if (near) {
+                console.log('Neighbour, unlucky (not posting)')
+            } else {
+                console.log('Not neighbour')
             }
         }
 

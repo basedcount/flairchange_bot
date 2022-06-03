@@ -23,13 +23,13 @@ const ins = {
 
 //String for regular flair changes
 function getFlair(author, flairOld, dateStr, flairNew) {
-    let intro = `Did you just change your flair, u/${author}? Last time I checked you were **${flairOld}** on ${dateStr}. How come now you are **${flairNew}**?Have you perhaps shifted your ideals? Because that's cringe, you know?`
+    let intro = `Did you just change your flair, u/${author}? Last time I checked you were **${flairOld}** on ${dateStr}. How come now you are **${flairNew}**? Have you perhaps shifted your ideals? Because that's cringe, you know?`
     return intro + ins[flairNew] + strings.footer
 }
 
 //String for leaderboard (needs to touch grass)
 function getGrass(author, flairOld, dateStr, flairNew, size, pos) {
-    let intro = `Did you just change your flair, u/${author}? Last time I checked you were **${flairOld}** on ${dateStr}. How come now you are **${flairNew}**?Have you perhaps shifted your ideals? Because that's cringe, you know?`
+    let intro = `Did you just change your flair, u/${author}? Last time I checked you were **${flairOld}** on ${dateStr}. How come now you are **${flairNew}**? Have you perhaps shifted your ideals? Because that's cringe, you know?`
     let grass = `\n\nOh and by the way. You have already changed your flair ${size} times, making you the ${pos} largest flair changer in this sub.\nGo touch some fucking grass.`
     return intro + grass + strings.footer
 }
