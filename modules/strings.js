@@ -9,12 +9,12 @@ const strings = {
 
 const ins = {
     AuthRight: "\n\nYeah, yeah we know: 13%, (((them))), [redacted]... Tell us, how are you going to flair the new account you'll make in two weeks?",
-    Right: "",
+    Right: "\n\nNo, me targeting you is not part of a conspiracy. And no, your flair count is not rigged. Stop listening to QAnon or the Orange Man and come out of that basement.",
     LibRight: "\n\nAre you mad? Pointing a military grade gun at your monitor won't solve much, pal. Come on, put that rifle down and go take a shower.",
-    PurpleLibRight: "\n\nNow come on, put your pants back on and go outside, you dirty degen.  \nNo, not that way, there's a school over there!",
+    PurpleLibRight: "\n\nNow come on, put your pants back on and go outside, you dirty degen.  \nNo wait, not that way. There's a school over there!",
     LibCenter: "\n\nWait, those were too many words, I'm sure. Maybe you'll understand this, monkey: \"oo oo aah YOU CRINGE ahah ehe\".",
-    LibLeft: "\n\nDid I offend you/them/xir/whatever? What are you gonna do? Cancel me on twitter?",
-    Left: "",
+    LibLeft: "\n\nYeah yeah, I know. In your ideal leftist communne everyone loves each other and no one insults anybody. Guess what? Welcome to the real word. What are you gonna do? Cancel me on twitter?",
+    Left: "\n\n If Orange was a flair you probably would have picked that, am I right? You watermelon-looking snowflake.",
     AuthLeft: "\n\nWhat? You are hungry? You want food? I fear you've chosen the wrong flair, comrade.",
     AuthCenter: "\n\nThat being said... Based and fellow Auth pilled, welcome home.",
     Centrist: "\n\nTell us, are you scared of politics in general or are you just too much of a coward to let everyone now what you think?",
