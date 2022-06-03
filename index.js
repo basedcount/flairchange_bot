@@ -5,7 +5,7 @@ const leaderboardPipe = require('./modules/leaderboard')
 const leaderboardPos = require('./modules/leaderboardPos')
 const noFlair = require('./modules/unflaired')
 const ngbr = require('./modules/neighbour')
-const { getFlair, getGrass, getUnflaired, getOptOut, getFlairListFooter, getSmallShift } = require('./modules/strings')
+const { getFlair, getGrass, getUnflaired, getOptOut, getListFlairs } = require('./modules/strings')
 
 const { CommentStream } = require('snoostorm')
 const cron = require('node-cron')
@@ -91,6 +91,8 @@ function run() {
                 }
             })
         })()
+    }).catch({ statusCode: 500 }, err => {
+        console.log('EROR: 500', err)
     })
 }
 
@@ -99,15 +101,15 @@ async function flairChange(comment, db, flair, res) {
     console.log('Flair change!', comment.author.name, 'was', res.flair.at(-1), 'now is', flair)
 
     let dateStr = getDateStr(res.dateAdded.at(-1))
-    let msg
+    let msg = getFlair(comment.author.name, res.flair.at(-1), dateStr, flair)
     let aggEntry //Resulting entry from aggregation pipeline
-    let leaderboardPosPipe = leaderboardPos(comment.author_fullname)
+    let leaderboardPosPipe = leaderboardPos(comment.author_fullname) //MongoDB aggregation pipeline, gets top flair changers
 
     await db.collection('PCM_users').aggregate(leaderboardPosPipe).forEach(log => { aggEntry = log }) //Running aggregation query for current user - necessary for flair changers ranking
 
     if (!res.optOut && !isSpam(res)) { //If user did not opt out and isn't spamming, send message, push to DB. Doesn't push if user is spamming. SPAM: if bot has written to the same user in the last DELAY minutes
         if (aggEntry != null) { //Touch grass message, for multiple flair changers, only if user is in the top (if entire collection is returned DB crashes!)
-            if (res.id === aggEntry.id && aggEntry.position <= 10) { //test possible redundancy res.id already known, $match DEV TODO
+            if (aggEntry.position <= 10) {
                 let ratingN = card2ord(aggEntry.position) //Get ordinal number ('second', 'third'...)
 
                 msg = getGrass(comment.author.name, res.flair.at(-1), dateStr, flair, aggEntry.size, ratingN)
@@ -115,11 +117,7 @@ async function flairChange(comment, db, flair, res) {
             }
         } else { //Regular message
             near = isNear(res.flair.at(-1), flair)
-            if (near && dice(2)) { //If flairs are neighbouring. Only answers a percentage of times (1/2)
-                msg = getSmallShift(comment.author.name, res.flair.at(-1), flair)
-            } else if (!near) { //Default case
-                msg = getFlair()
-            } else { //Dice returned a false value => exits
+            if (near && !dice(4)) { //If flairs are neighbouring. Only answers a percentage of times (1/4), ends every other time 
                 return
             }
         }
@@ -309,7 +307,6 @@ function summonListFlairsWrapper(comment, db) {
 async function summonListFlairs(comment, db) {
     const regexReddit = /u\/[A-Za-z0-9_-]+/gm //Regex matching a reddit username:A-Z, a-z, 0-9, _, -
     const user = comment.body.match(regexReddit) //Extract username 'u/NAME' from the message, according to the REGEX
-    let msg = 'User u/' //Reply message, composed during the function
 
     if (user == null) { //If no username was provided exit
         console.log('Tried answering but user', comment.author.name, 'didn\'t enter a reddit username')
@@ -317,30 +314,14 @@ async function summonListFlairs(comment, db) {
     }
 
     const username = user[0].slice(2) //Cut 'u/', get RAW username
-    msg += username
 
     log = await db.collection('PCM_users').findOne({ name: username }) //Run query, search for provided username
     if (log == null) {
         console.log('Tried answering but user', comment.author.name, 'didn\'t enter an indexed username')
         return false
-    } else if (log.flair.length > 1) { //Compose the message
-        msg += ` changed their flair ${log.flair.length} times. This makes them unbelievably cringe.`
-    } else {
-        msg += ' never changed their flair.'
     }
-    msg += ' Here\'s their flair history:\n\n'
 
-    log.flair.forEach((elem, i) => {
-        if (i == 0) {
-            msg += `${i + 1}) Started as ${elem} on ${log.dateAdded[i].toUTCString()}.\n\n`
-        } else {
-            msg += `${i + 1}) Switched to ${elem} on ${log.dateAdded[i].toUTCString()}.\n\n`
-        }
-    })
-
-    msg += getFlairListFooter(delay)
-
-    comment.reply(msg) //Reply!
+    comment.reply(getListFlairs(username, log, delay)) //Reply!
 
     return true
 }
