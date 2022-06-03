@@ -11,7 +11,7 @@ const uri = process.env.MONGODB_URI
 const client = new MongoClient(uri);
 
 const ngbr = require('../modules/neighbour')
-const strings = require('../modules/strings')
+const { getFlair, getGrass, getUnflaired, getOptOut, getListFlairs, getSmallShift } = require('../modules/strings')
 const leaderboardPos = require('../modules/leaderboardPos')
 
 const r = new Snoowrap({
@@ -22,45 +22,14 @@ const r = new Snoowrap({
     password: process.env.REDDIT_PASS
 });
 
-const stream = new CommentStream(r, {
-    subreddit: 'testingground4bots',
-    results: 1
-        /*,
-        pollTime: 5000*/ //Add this line if reddit api seems slow
-});
+// const stream = new CommentStream(r, {
+//     subreddit: 'testingground4bots',
+//     results: 1
+// });
 
-stream.on('item', comment => {
-    (async() => {
-        await client.connect()
-        const db = client.db('flairChangeBot');
+// stream.on('item', comment => {
+(async() => {
 
-        // console.log(strings.getFlair('Nerd02', 'AuthRight', '2022-12-04', 'Centrist'))
 
-        // let target = 'Centrist'
-        // db.collection('PCM_users').aggregate([{
-        //     $project: {
-        //         _id: 0,
-        //         flair: 1,
-        //         name: 1
-        //     }
-        // }, { $unwind: "$flair" }, {
-        //     $group: {
-        //         _id: "$flair"
-        //     }
-        // }]).forEach(el => {
-        //     if (isNear(el._id, target))
-        //         console.log(el._id, 'is near', target)
-        //     else
-        //         console.log(el._id, 'is NOT near', target)
-        // })
-
-        console.log(strings.getFlair('Nerd02', 'AuthLeft', '2022-12-23', 'AuthCentercd'))
-    })()
-})
-
-function isNear(oldF, newF) {
-    if (ngbr[oldF].includes(newF))
-        return true
-    else
-        return false
-}
+    console.log(getGrass('Nerd02', 'AuthRight', '2022-03-12', 'AuthCenter', 12, 4))
+})()

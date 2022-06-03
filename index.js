@@ -5,7 +5,7 @@ const leaderboardPipe = require('./modules/leaderboard')
 const leaderboardPos = require('./modules/leaderboardPos')
 const noFlair = require('./modules/unflaired')
 const ngbr = require('./modules/neighbour')
-const { getFlair, getGrass, getUnflaired, getOptOut, getFlairListFooter } = require('./modules/strings')
+const { getFlair, getGrass, getUnflaired, getOptOut, getListFlairs } = require('./modules/strings')
 
 const { CommentStream } = require('snoostorm')
 const cron = require('node-cron')
@@ -25,7 +25,7 @@ const stream = new CommentStream(r, {
     results: 1
 })
 
-const delay = 10 //delay [minutes] between multiple messages to the same user - prevents spam
+const delay = 2 //delay [minutes] between multiple messages to the same user - prevents spam
 const delayMS = delay * 60000 //same value as above but in milliseconds, needed for JS Date functions
 let callers = Array() //Array containing the callers who used the "!flairs" command, antispam
 
@@ -69,7 +69,7 @@ function run() {
                 if (err) throw err
 
                 if (flair === null && res === null) { //Unflaired and not in DB
-                    unflaired()
+                    unflaired(comment)
                     return
                 } else if (res === null) { //Flaired, not in DB
                     if (comment.body.includes('!cringe')) {
@@ -78,7 +78,7 @@ function run() {
                         newUser(comment, db, flair)
                     }
                 } else if (flair === null && res.unflaired) { //Unflaired, is in DB and is a registered unflaired
-                    unflaired()
+                    unflaired(comment)
                     return
                 } else if (flair === null && res.flair.at(-1) != flair) { //Is in DB but switched to unflaired
                     flairChangeUnflaired(comment, res, db)
@@ -99,23 +99,32 @@ async function flairChange(comment, db, flair, res) {
     console.log('Flair change!', comment.author.name, 'was', res.flair.at(-1), 'now is', flair)
 
     let dateStr = getDateStr(res.dateAdded.at(-1))
-    let msg
+    let msg = getFlair(comment.author.name, res.flair.at(-1), dateStr, flair)
     let aggEntry //Resulting entry from aggregation pipeline
-    let leaderboardPosPipe = leaderboardPos(comment.author_fullname)
+    let leaderboardPosPipe = leaderboardPos(comment.author_fullname) //MongoDB aggregation pipeline, gets top flair changers
 
     await db.collection('PCM_users').aggregate(leaderboardPosPipe).forEach(log => { aggEntry = log }) //Running aggregation query for current user - necessary for flair changers ranking
 
     if (!res.optOut && !isSpam(res)) { //If user did not opt out and isn't spamming, send message, push to DB. Doesn't push if user is spamming. SPAM: if bot has written to the same user in the last DELAY minutes
         if (aggEntry != null) { //Touch grass message, for multiple flair changers, only if user is in the top (if entire collection is returned DB crashes!)
-            if (res.id === aggEntry.id && aggEntry.position <= 10) { //test possible redundancy res.id already known, $match DEV TODO
+            if (aggEntry.position <= 10) {
                 let ratingN = card2ord(aggEntry.position) //Get ordinal number ('second', 'third'...)
 
                 msg = getGrass(comment.author.name, res.flair.at(-1), dateStr, flair, aggEntry.size, ratingN)
                 console.log('Not a grass toucher', comment.author.name)
             }
         } else { //Regular message
-            msg = getFlair(comment.author.name, res.flair.at(-1), dateStr, flair)
+            near = isNear(res.flair.at(-1), flair)
+            if (near && !dice(4)) { //If flairs are neighbouring. Only answers a percentage of times (1/4), ends every other time
+                console.log('Neighbour')
+                return
+            } else if (near) {
+                console.log('Neighbour, unlucky (not posting)')
+            } else {
+                console.log('Not neighbour')
+            }
         }
+
         if ((res.flair.at(-1) == 'Centrist' && flair == 'GreyCentrist') || (res.flair.at(-1) == 'LibRight' && flair == 'PurpleLibRight')) { //GRACE, remove on later update. If graced still pushes to DB (ofc)
             db.collection('PCM_users').updateOne({ id: comment.author_fullname }, { $push: { flair: flair, dateAdded: new Date() } }, (err, res) => {
                 if (err) throw err
@@ -301,7 +310,6 @@ function summonListFlairsWrapper(comment, db) {
 async function summonListFlairs(comment, db) {
     const regexReddit = /u\/[A-Za-z0-9_-]+/gm //Regex matching a reddit username:A-Z, a-z, 0-9, _, -
     const user = comment.body.match(regexReddit) //Extract username 'u/NAME' from the message, according to the REGEX
-    let msg = 'User u/' //Reply message, composed during the function
 
     if (user == null) { //If no username was provided exit
         console.log('Tried answering but user', comment.author.name, 'didn\'t enter a reddit username')
@@ -309,30 +317,14 @@ async function summonListFlairs(comment, db) {
     }
 
     const username = user[0].slice(2) //Cut 'u/', get RAW username
-    msg += username
 
     log = await db.collection('PCM_users').findOne({ name: username }) //Run query, search for provided username
     if (log == null) {
         console.log('Tried answering but user', comment.author.name, 'didn\'t enter an indexed username')
         return false
-    } else if (log.flair.length > 1) { //Compose the message
-        msg += ` changed their flair ${log.flair.length} times. This makes them unbelievably cringe.`
-    } else {
-        msg += ' never changed their flair.'
     }
-    msg += ' Here\'s their flair history:\n\n'
 
-    log.flair.forEach((elem, i) => {
-        if (i == 0) {
-            msg += `${i + 1}) Started as ${elem} on ${log.dateAdded[i].toUTCString()}.\n\n`
-        } else {
-            msg += `${i + 1}) Switched to ${elem} on ${log.dateAdded[i].toUTCString()}.\n\n`
-        }
-    })
-
-    msg += getFlairListFooter(delay)
-
-    comment.reply(msg) //Reply!
+    comment.reply(getListFlairs(username, log, delay)) //Reply!
 
     return true
 }
@@ -340,7 +332,7 @@ async function summonListFlairs(comment, db) {
 //Rolls a dice. Returns true if a random int in [0 - d] is equal to d => 1/d cases
 function dice(d) {
     let rand = Math.floor(Math.random() * d) + 1
-
+    console.log(`\td${d} = ${rand}`) //DEBUG - DEV
     if (d == rand) return true
     else return false
 }
