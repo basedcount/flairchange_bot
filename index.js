@@ -116,10 +116,10 @@ async function flairChange(comment, db, flair, res) {
         } else { //Regular message
             near = isNear(res.flair.at(-1), flair)
             if (near && !dice(4)) { //If flairs are neighbouring. Only answers a percentage of times (1/4), ends every other time
-                console.log('Neighbour')
+                console.log('Neighbour, unlucky (not posting)')
                 return
             } else if (near) {
-                console.log('Neighbour, unlucky (not posting)')
+                console.log('Neighbour')
             } else {
                 console.log('Not neighbour')
             }
@@ -332,7 +332,7 @@ async function summonListFlairs(comment, db) {
 //Rolls a dice. Returns true if a random int in [0 - d] is equal to d => 1/d cases
 function dice(d) {
     let rand = Math.floor(Math.random() * d) + 1
-    console.log(`\td${d} = ${rand}`) //DEBUG - DEV
+
     if (d == rand) return true
     else return false
 }
