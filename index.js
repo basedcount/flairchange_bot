@@ -117,6 +117,9 @@ async function flairChange(comment, db, flair, res) {
             near = isNear(res.flair.at(-1), flair)
             if (near && !dice(4)) { //If flairs are neighbouring. Only answers a percentage of times (1/4), ends every other time
                 console.log('Neighbour, unlucky (not posting)')
+                db.collection('PCM_users').updateOne({ id: comment.author_fullname }, { $push: { flair: flair, dateAdded: new Date() } }, (err, res) => {
+                    if (err) throw err
+                })
                 return
             } else if (near) {
                 console.log('Neighbour')
