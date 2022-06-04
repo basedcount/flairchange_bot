@@ -1,1 +1,1 @@
-db.PCM_users.find({id: 't2_dpz2njnn'})
+db.PCM_users.find({})

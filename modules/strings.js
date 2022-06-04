@@ -17,7 +17,7 @@ const ins = {
     Left: "\n\n If Orange was a flair you probably would have picked that, am I right? You watermelon-looking snowflake.",
     AuthLeft: "\n\nWhat? You are hungry? You want food? I fear you've chosen the wrong flair, comrade.",
     AuthCenter: "\n\nThat being said... Based and fellow Auth pilled, welcome home.",
-    Centrist: "\n\nTell us, are you scared of politics in general or are you just too much of a coward to let everyone now what you think?",
+    Centrist: "\n\nTell us, are you scared of politics in general or are you just too much of a coward to let everyone know what you think?",
     GreyCentrist: "\n\nActually nevermind, you are good. Not having opinions is still more based than having dumb ones. Happy grilling, brother."
 }
 
