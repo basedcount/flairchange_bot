@@ -4,7 +4,8 @@ const strings = {
     unflairedChangeOutro: `\n\nYou are beyond cringe, you are disgusting and deserving of all the downvotes you are going to get. Repent now and pick a new flair before it's too late.`,
     optOut: `You are both cringe and a coward, however [I no longer offer opt outs](https://www.reddit.com/user/flairchange_bot/comments/v8f90t/about_the_opt_out_feature/?utm_source=share&utm_medium=web2x&context=3).  \nI'll keep bothering you as much as I do with any other user. Sorry, not sorry.`,
     flairsFCBot: `Nothing to see here. Always been AuthCenter, always will. I'm no flair changer.`,
-    flairsBCBot: `You leave my good friend u/basedcount_bot out of this! He's a good guy, not some dirty flair changer.`
+    flairsBCBot: `You leave my good friend u/basedcount_bot out of this! He's a good guy, not some dirty flair changer.`,
+    flairsUNFLAIRED: `u/--UNFLAIRED-- is, was and probably will always be: unflaired; he is the cringiest unflaired of them all. His memes are fucking good tho, that makes him both based and cringe at the same time.`
 }
 
 const ins = {
@@ -47,41 +48,62 @@ function getOptOut() {
 
 //Returns a list of flair changes for the matching 'username'. Includes easter eggs for username == 'flairchange_bot' && 'basedcount_bot'
 function getListFlairs(username, log, delay) {
+    let warning = `^(Apologies if something is missing, the oldest data I have dates back to 2022-04-25.)\n\n`
     let footer = `^(I am a bot, my mission is to spot cringe flair changers. You can check a user's history with the) **^( !flairs u/<name>)** ^(command. Each user can use this command once every ${delay} minutes.)`
 
     if (username === 'flairchange_bot') {
         return strings.flairsFCBot + '\n\n' + footer
     } else if (username === 'basedcount_bot') {
         return strings.flairsBCBot + '\n\n' + footer
+    } else if (username === '--UNFLAIRED--' && log.unflaired) {
+        return strings.flairsUNFLAIRED + '\n\n' + footer
     }
 
     let msg = 'User u/'
+    let cringiness
+
+    //Cringe level, depending on amounts of flair changes
+    if (log.flair.length >= 50) cringiness = 'infinitely'
+    else if (log.flair.length >= 40) cringiness = 'abismally'
+    else if (log.flair.length >= 30) cringiness = 'immeasurably'
+    else if (log.flair.length >= 20) cringiness = 'unfathomably'
+    else if (log.flair.length >= 15) cringiness = 'extraordinarily'
+    else if (log.flair.length >= 10) cringiness = 'exceptionally'
+    else if (log.flair.length >= 7) cringiness = 'astonishingly'
+    else if (log.flair.length >= 5) cringiness = 'remarkably'
+    else if (log.flair.length >= 3) cringiness = 'especially'
+    else if (log.flair.length >= 2) cringiness = 'uncommonly'
+    else if (log.flair.length >= 1) cringiness = 'pretty'
 
     msg += username
 
     if (log.flair.length > 1) {
-        msg += ` changed their flair ${log.flair.length} times. This makes them unbelievably cringe.`
+        msg += ` changed their flair ${log.flair.length} times. This makes them ${cringiness} cringe.`
     } else {
-        msg += ' never changed their flair.'
+        msg += ' never changed their flair. This makes them rather based.'
     }
     msg += ' Here\'s their flair history:\n\n'
 
     log.flair.forEach((elem, i) => {
         if (i == 0) {
-            msg += `${i + 1}) Started as ${elem} on ${log.dateAdded[i].toUTCString()}.\n\n`
+            if (log.dateAdded[0] < new Date('2022-04-25')) {
+                msg += `${i + 1}) Started as ${elem} some time before ${new Date('2022-04-25').toUTCString()}.\n\n`
+            } else {
+                msg += `${i + 1}) Started as ${elem} on ${log.dateAdded[i].toUTCString()}.\n\n`
+            }
         } else {
             msg += `${i + 1}) Switched to ${elem} on ${log.dateAdded[i].toUTCString()}.\n\n`
         }
     })
 
-    return msg + footer
+    return msg + warning + footer
 }
 
 function getListFlairsErr(context, delay) {
     let footer = `^(I am a bot, my mission is to spot cringe flair changers. You can check a user's history with the) **^( !flairs u/<name>)** ^(command. Each user can use this command once every ${delay} minutes.)`
     let msg
 
-    if (contex == 0) {
+    if (context == 0) {
         msg = "That doesn't look correct. Enter a proper reddit username.\n\n"
     } else if (context == 1) {
         msg = "Sorry, that username doesn't appear in my database, I can't provide any flair history.  \nRemember that reddit usernames are CaSe SeNsItIvE\n\n"

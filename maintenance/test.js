@@ -11,7 +11,7 @@ const uri = process.env.MONGODB_URI
 const client = new MongoClient(uri);
 
 const ngbr = require('../modules/neighbour')
-const { getFlair, getGrass, getUnflaired, getOptOut, getListFlairs, getSmallShift } = require('../modules/strings')
+    // const { getFlair, getGrass, getUnflaired, getOptOut, getListFlairs, getSmallShift } = require('../modules/strings')
 const leaderboardPos = require('../modules/leaderboardPos')
 
 const r = new Snoowrap({
@@ -30,6 +30,15 @@ const r = new Snoowrap({
 // stream.on('item', comment => {
 (async() => {
 
+    await client.connect()
+    const db = client.db('flairChangeBot')
 
-    console.log(getGrass('Nerd02', 'AuthRight', '2022-03-12', 'AuthCenter', 12, 4))
+    let log = await db.collection('PCM_users').findOne({ name: 'Nerd02' })
+    console.log(log)
+
+    if (log.dateAdded[0] < new Date('2022-04-25')) {
+        console.log('Old')
+    } else {
+        console.log('New')
+    }
 })()
