@@ -60,10 +60,6 @@ function run() {
                 flair = flair.substring(flair.indexOf('-') + 2)
         }
 
-        if (comment.body.includes('!flairs')) { //The bot was summoned using the "!flairs" command
-            summonListFlairsWrapper(comment, db)
-        }
-
         (async() => {
             db.collection('PCM_users').findOne({ id: comment.author_fullname }, async(err, res) => { //Check for any already present occurrence
                 if (err) throw err
@@ -91,6 +87,12 @@ function run() {
                 }
             })
         })()
+
+        if (comment.body.includes('!flairs')) { //The bot was summoned using the "!flairs" command
+            setTimeout(() => {
+                    summonListFlairsWrapper(comment, db)
+                }, 10000) //Wait 10 seconds (in case of both flair change and summon, avoid ratelimit)
+        }
     })
 }
 
@@ -111,17 +113,17 @@ async function flairChange(comment, db, flair, res) {
                 let ratingN = card2ord(aggEntry.position) //Get ordinal number ('second', 'third'...)
 
                 msg = getGrass(comment.author.name, res.flair.at(-1), dateStr, flair, aggEntry.size, ratingN)
-                console.log('Not a grass toucher', comment.author.name)
+                console.log('\tNot a grass toucher', comment.author.name)
             }
         } else { //Regular message
             near = isNear(res.flair.at(-1), flair)
             if (near && !dice(4)) { //If flairs are neighbouring. Only answers a percentage of times (1/4), ends every other time
-                console.log('Neighbour')
+                console.log('\tNeighbour, posting')
                 return
             } else if (near) {
-                console.log('Neighbour, unlucky (not posting)')
+                console.log('\tNeighbour, not posting')
             } else {
-                console.log('Not neighbour')
+                console.log('\tNot neighbour')
             }
         }
 
@@ -329,7 +331,7 @@ async function summonListFlairs(comment, db) {
 //Rolls a dice. Returns true if a random int in [0 - d] is equal to d => 1/d cases
 function dice(d) {
     let rand = Math.floor(Math.random() * d) + 1
-    console.log(`\td${d} = ${rand}`) //DEBUG - DEV
+
     if (d == rand) return true
     else return false
 }

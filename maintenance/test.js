@@ -11,7 +11,7 @@ const uri = process.env.MONGODB_URI
 const client = new MongoClient(uri);
 
 const ngbr = require('../modules/neighbour')
-    // const { getFlair, getGrass, getUnflaired, getOptOut, getListFlairs, getSmallShift } = require('../modules/strings')
+const { getFlair, getGrass, getUnflaired, getOptOut, getListFlairs, getSmallShift } = require('../modules/strings')
 const leaderboardPos = require('../modules/leaderboardPos')
 
 const r = new Snoowrap({
