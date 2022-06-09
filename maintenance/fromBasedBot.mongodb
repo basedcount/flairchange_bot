@@ -1,0 +1,23 @@
+const aggr = [
+	 {
+		$project: {
+			_id: 0, 
+			optOut: 0,
+			flair: 0,
+			unflaired: 0,
+			id: 0
+		}
+	}, {
+		$unwind: '$dateAdded'
+	}, {
+		$match: {
+			dateAdded:{
+				$lt: ISODate('2022-04-25')
+			}
+		}
+	}/*, {
+		$count: 'users'
+	}*/
+]
+
+db.PCM_users.aggregate(aggr)

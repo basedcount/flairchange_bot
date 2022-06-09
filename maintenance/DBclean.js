@@ -7,7 +7,7 @@ const client = new MongoClient(uri);
 let prev = 0
 let counter = 0
 
-const delay = 10 //delay [minutes] between multiple messages to the same user - prevents spam
+const delay = 5 //delay [minutes] between multiple messages to the same user - prevents spam
 let delayMS = delay * 60000; //same value as above but in milliseconds, needed for JS Date functions
 
 (async() => {
