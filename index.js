@@ -105,7 +105,7 @@ async function flairChange(comment, db, flair, res) {
 
     await db.collection('PCM_users').aggregate(leaderboardPosPipe).forEach(log => { aggEntry = log }) //Running aggregation query for current user - necessary for flair changers ranking
 
-    if (!res.optOut && !isSpam(res)) { //If user did not opt out and isn't spamming, send message, push to DB. Doesn't push if user is spamming. SPAM: if bot has written to the same user in the last DELAY minutes
+    if (!isSpam(res)) { //If user isn't spamming, send message, push to DB. Doesn't push if user is spamming. SPAM: if bot has written to the same user in the last DELAY minutes
         if (aggEntry != null) { //Touch grass message, for multiple flair changers, only if user is in the top (if entire collection is returned DB crashes!)
             if (aggEntry.position <= 10) {
                 let ratingN = card2ord(aggEntry.position) //Get ordinal number ('second', 'third'...)
@@ -136,11 +136,6 @@ async function flairChange(comment, db, flair, res) {
             })
             comment.reply(msg) //HERE'S WHERE THE MAGIC HAPPENS - let's bother some people
         }
-    } else if (res.optOut) { //Opt-out, pushes to DB
-        console.log('Tried answering but user', comment.author.name, 'opted out')
-        db.collection('PCM_users').updateOne({ id: comment.author_fullname }, { $push: { flair: flair, dateAdded: new Date() } }, (err, res) => {
-            if (err) throw err
-        })
     } else if (isSpam(res)) { //Spam. Doesn't push to DB
         console.log('Tried answering but user', comment.author.name, 'is spamming')
     }
@@ -157,11 +152,7 @@ async function flairChangeUnflaired(comment, res, db) {
     let dateStr = getDateStr(res.dateAdded.at(-1))
     msg = getUnflaired(comment.author.name, res.flair.at(-1), dateStr)
 
-    if (!res.optOut) {
-        comment.reply(msg)
-    } else {
-        console.log('Tried answering but user', comment.author.name, 'opted out')
-    }
+    comment.reply(msg)
 
     await db.collection('PCM_users').updateOne({ id: res.id }, { $set: { unflaired: true } })
 }
@@ -205,6 +196,10 @@ async function optOut(comment, res, db, context) {
         if (!res.optOut) {
             comment.reply(optOutMsg)
             await db.collection('PCM_users').updateOne({ id: comment.author_fullname }, { $set: { optOut: true } })
+        } else {
+            if (dice(5)) { //User has already opted out - only answers 20% of times
+                comment.reply(optOutMsg)
+            }
         }
     } else if (context == 1) { //Special case, user isn't present in DB but has requested an optOut
         comment.reply(optOutMsg)
@@ -248,7 +243,7 @@ function card2ord(param) {
 
 //Updates the wall of shame. Post ID is hardcoded
 async function wallOfShame(db) {
-    let msg = 'This is the wall of shame, containing the names of all the cringe users who opted out using the \`!cringe\` command. May their cowardice never be forgotten.\n\n\n'
+    let msg = 'EDIT: As of 2022-06-09 opt outs are no longer permitted. This post will stay here as a reminder: there\'s no escape from u/flairchange_bot.\n\nThis is the wall of shame, containing the names of all the cringe users who opted out using the \`!cringe\` command. May their cowardice never be forgotten.\n\n\n'
 
     console.log('Updating Wall of shame')
 

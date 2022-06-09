@@ -1,0 +1,29 @@
+const aggr = [
+    {
+        $project: {
+            _id: 0,
+            id: 0,
+            dateAdded: 0
+        }
+    },
+    {
+        $set: {
+            size: {
+                $size: '$flair'
+            }
+        }
+    },
+    {
+       $match: {
+           size: {
+               $gt: 1
+           },
+           optOut: true
+        }
+    },
+    {
+        $count: 'optOuters'
+    }
+]
+
+db.PCM_users.aggregate(aggr)
