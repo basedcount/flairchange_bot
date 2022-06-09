@@ -25,7 +25,7 @@ const stream = new CommentStream(r, {
     results: 1
 })
 
-const delay = 2 //delay [minutes] between multiple messages to the same user - prevents spam
+const delay = 5 //delay [minutes] between multiple messages to the same user - prevents spam
 const delayMS = delay * 60000 //same value as above but in milliseconds, needed for JS Date functions
 let callers = Array() //Array containing the callers who used the "!flairs" command, antispam
 
