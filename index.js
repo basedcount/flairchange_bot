@@ -5,7 +5,7 @@ const leaderboardPipe = require('./modules/leaderboard')
 const leaderboardPos = require('./modules/leaderboardPos')
 const noFlair = require('./modules/unflaired')
 const ngbr = require('./modules/neighbour')
-const { getFlair, getGrass, getUnflaired, getOptOut, getListFlairs } = require('./modules/strings')
+const { getFlair, getGrass, getUnflaired, getOptOut, getListFlairs, getListFlairsErr } = require('./modules/strings')
 
 const { CommentStream } = require('snoostorm')
 const cron = require('node-cron')
@@ -25,7 +25,7 @@ const stream = new CommentStream(r, {
     results: 1
 })
 
-const delay = 2 //delay [minutes] between multiple messages to the same user - prevents spam
+const delay = 5 //delay [minutes] between multiple messages to the same user - prevents spam
 const delayMS = delay * 60000 //same value as above but in milliseconds, needed for JS Date functions
 let callers = Array() //Array containing the callers who used the "!flairs" command, antispam
 
@@ -289,7 +289,7 @@ function summonListFlairsWrapper(comment, db) {
             console.log('Summon: YES - In object and match criteria', comment.author.name)
 
             if (summonListFlairs(comment, db)) { //If param is a reddit username, update in the caller array
-                console.log('Updating...')
+                console.log('\tUpdating...')
                 index = callers.findIndex(x => x.id === comment.author_fullname)
                 callers[index].date = new Date()
             }
@@ -313,7 +313,8 @@ async function summonListFlairs(comment, db) {
 
     if (user == null) { //If no username was provided exit
         console.log('Tried answering but user', comment.author.name, 'didn\'t enter a reddit username')
-        return false
+        comment.reply(getListFlairsErr(0, delay))
+        return false //WARNING - SPAM: errors aren't counted in the antispam count. Should be fixed if abused
     }
 
     const username = user[0].slice(2) //Cut 'u/', get RAW username
@@ -321,7 +322,8 @@ async function summonListFlairs(comment, db) {
     log = await db.collection('PCM_users').findOne({ name: username }) //Run query, search for provided username
     if (log == null) {
         console.log('Tried answering but user', comment.author.name, 'didn\'t enter an indexed username')
-        return false
+        comment.reply(getListFlairsErr(1, delay))
+        return false //WARNING - SPAM: errors aren't counted in the antispam count. Should be fixed if abused
     }
 
     comment.reply(getListFlairs(username, log, delay)) //Reply!

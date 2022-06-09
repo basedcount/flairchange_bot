@@ -77,10 +77,23 @@ function getListFlairs(username, log, delay) {
     return msg + footer
 }
 
+function getListFlairsErr(context, delay) {
+    let footer = `^(I am a bot, my mission is to spot cringe flair changers. You can check a user's history with the) **^( !flairs u/<name>)** ^(command. Each user can use this command once every ${delay} minutes.)`
+    let msg
+
+    if (contex == 0) {
+        msg = "That doesn't look correct. Enter a proper reddit username.\n\n"
+    } else if (context == 1) {
+        msg = "Sorry, that username doesn't appear in my database, I can't provide any flair history.  \nRemember that reddit usernames are CaSe SeNsItIvE\n\n"
+    }
+    return msg + footer
+}
+
 module.exports = {
     getFlair,
     getGrass,
     getUnflaired,
     getOptOut,
-    getListFlairs
+    getListFlairs,
+    getListFlairsErr
 }
