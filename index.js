@@ -181,7 +181,7 @@ function unflaired(comment) {
 
     let rand = Math.floor(Math.random() * noFlair.length)
 
-    if (dice(4)) {
+    if (dice(10)) {
         console.log(`Unflaired: ${comment.author.name}`)
         comment.reply(noFlair[rand])
     }
