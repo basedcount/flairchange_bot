@@ -156,7 +156,8 @@ async function flairChangeUnflaired(comment, res, db) {
 
     comment.reply(msg)
 
-    await db.collection('PCM_users').updateOne({ id: res.id }, { $set: { unflaired: true } })
+    await db.collection('PCM_users').updateOne({ id: res.id }, { $set: { unflaired: true } }) //Legacy, to be removed
+    await db.collection('PCM_users').updateOne({ id: res.id }, { $push: { flair: 'null', dateAdded: new Date() } })
 }
 
 //Pushes a new user to the DB
