@@ -31,14 +31,9 @@ const r = new Snoowrap({
 (async() => {
 
     await client.connect()
-    const db = client.db('flairChangeBot')
+    const db = client.db('flairChangeBot').collection('PCM_users')
 
-    let log = await db.collection('PCM_users').findOne({ name: 'Nerd02' })
+    let log = await db.findOne({ name: 'Nerd02' })
     console.log(log)
 
-    if (log.dateAdded[0] < new Date('2022-04-25')) {
-        console.log('Old')
-    } else {
-        console.log('New')
-    }
 })()

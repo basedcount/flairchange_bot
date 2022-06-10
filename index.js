@@ -34,7 +34,7 @@ run()
 //Main function
 function run() {
     client.connect()
-    const db = client.db('flairChangeBot')
+    const db = client.db('flairChangeBot').collection('PCM_users')
 
     console.log('Starting up...')
 
@@ -61,7 +61,7 @@ function run() {
         }
 
         (async() => {
-            db.collection('PCM_users').findOne({ id: comment.author_fullname }, async(err, res) => { //Check for any already present occurrence
+            db.findOne({ id: comment.author_fullname }, async(err, res) => { //Check for any already present occurrence
                 if (err) throw err
 
                 if (flair === null && res === null) { //Unflaired and not in DB
@@ -105,7 +105,7 @@ async function flairChange(comment, db, flair, res) {
     let aggEntry //Resulting entry from aggregation pipeline
     let leaderboardPosPipe = leaderboardPos(comment.author_fullname) //MongoDB aggregation pipeline, gets top flair changers
 
-    await db.collection('PCM_users').aggregate(leaderboardPosPipe).forEach(log => { aggEntry = log }) //Running aggregation query for current user - necessary for flair changers ranking
+    await db.aggregate(leaderboardPosPipe).forEach(log => { aggEntry = log }) //Running aggregation query for current user - necessary for flair changers ranking
 
     if (!isSpam(res)) { //If user isn't spamming, send message, push to DB. Doesn't push if user is spamming. SPAM: if bot has written to the same user in the last DELAY minutes
         if (aggEntry != null) { //Touch grass message, for multiple flair changers, only if user is in the top (if entire collection is returned DB crashes!)
@@ -128,12 +128,12 @@ async function flairChange(comment, db, flair, res) {
         }
 
         if ((res.flair.at(-1) == 'Centrist' && flair == 'GreyCentrist') || (res.flair.at(-1) == 'LibRight' && flair == 'PurpleLibRight')) { //GRACE, remove on later update. If graced still pushes to DB (ofc)
-            db.collection('PCM_users').updateOne({ id: comment.author_fullname }, { $push: { flair: flair, dateAdded: new Date() } }, (err, res) => {
+            db.updateOne({ id: comment.author_fullname }, { $push: { flair: flair, dateAdded: new Date() } }, (err, res) => {
                 if (err) throw err
             })
             console.log('Graced', comment.author.name)
         } else { //Default case, pushes to DB
-            db.collection('PCM_users').updateOne({ id: comment.author_fullname }, { $push: { flair: flair, dateAdded: new Date() } }, (err, res) => {
+            db.updateOne({ id: comment.author_fullname }, { $push: { flair: flair, dateAdded: new Date() } }, (err, res) => {
                 if (err) throw err
             })
             comment.reply(msg) //HERE'S WHERE THE MAGIC HAPPENS - let's bother some people
@@ -143,7 +143,7 @@ async function flairChange(comment, db, flair, res) {
     }
 
     if (res.unflaired) { //User was flagged as unflaired
-        await db.collection('PCM_users').updateOne({ id: res.id }, { $unset: { unflaired: true } })
+        await db.updateOne({ id: res.id }, { $unset: { unflaired: true } })
     }
 }
 
@@ -156,13 +156,13 @@ async function flairChangeUnflaired(comment, res, db) {
 
     comment.reply(msg)
 
-    await db.collection('PCM_users').updateOne({ id: res.id }, { $set: { unflaired: true } }) //Legacy, to be removed
-    await db.collection('PCM_users').updateOne({ id: res.id }, { $push: { flair: 'null', dateAdded: new Date() } })
+    await db.updateOne({ id: res.id }, { $set: { unflaired: true } }) //Legacy, to be removed
+    await db.updateOne({ id: res.id }, { $push: { flair: 'null', dateAdded: new Date() } })
 }
 
 //Pushes a new user to the DB
 async function newUser(comment, db, flair) {
-    await db.collection('PCM_users').insertOne({
+    await db.insertOne({
         id: comment.author_fullname,
         name: comment.author.name,
         flair: [flair],
@@ -198,7 +198,7 @@ async function optOut(comment, res, db, context) {
     if (context == 0) { //Normal case, user is already present in the DB
         if (!res.optOut) {
             comment.reply(optOutMsg)
-            await db.collection('PCM_users').updateOne({ id: comment.author_fullname }, { $set: { optOut: true } })
+            await db.updateOne({ id: comment.author_fullname }, { $set: { optOut: true } })
         } else {
             if (dice(5)) { //User has already opted out - only answers 20% of times
                 comment.reply(optOutMsg)
@@ -206,7 +206,7 @@ async function optOut(comment, res, db, context) {
         }
     } else if (context == 1) { //Special case, user isn't present in DB but has requested an optOut
         comment.reply(optOutMsg)
-        await db.collection('PCM_users').insertOne({ //Add them + optOut
+        await db.insertOne({ //Add them + optOut
             id: comment.author_fullname,
             name: comment.author.name,
             flair: [flair],
@@ -250,7 +250,7 @@ async function wallOfShame(db) {
 
     console.log('Updating Wall of shame')
 
-    cursor = db.collection('PCM_users').find({ optOut: true }, { sort: { _id: 1 }, projection: { _id: 0, dateAdded: 0, id: 0, optOut: 0 } }) //Run query, returns a cursor (see MongoDB docs)
+    cursor = db.find({ optOut: true }, { sort: { _id: 1 }, projection: { _id: 0, dateAdded: 0, id: 0, optOut: 0 } }) //Run query, returns a cursor (see MongoDB docs)
     await cursor.forEach(item => {
         if (item.flair.length - 1 == 1)
             msg += `- ${item.name}\xa0\xa0\xa0-\xa0\xa0\xa0${item.flair.length - 1} flair change\n\n`
@@ -267,7 +267,7 @@ async function leaderboard(db) {
 
     console.log('Updating Leaderboard')
 
-    cursor = db.collection('PCM_users').aggregate(leaderboardPipe) //Run query, returns a cursor (see MongoDB docs)
+    cursor = db.aggregate(leaderboardPipe) //Run query, returns a cursor (see MongoDB docs)
     i = 0 //counter needs to be implemented manually, cursor.forEach != array.forEach
     await cursor.forEach(item => {
         if (i >= 20) return //Only show the top 20 (from 0 to 19)
@@ -317,7 +317,7 @@ async function summonListFlairs(comment, db) {
 
     const username = user[0].slice(2) //Cut 'u/', get RAW username
 
-    log = await db.collection('PCM_users').findOne({ name: username }) //Run query, search for provided username
+    log = await db.findOne({ name: username }) //Run query, search for provided username
     if (log == null) {
         console.log('Tried answering but user', comment.author.name, 'didn\'t enter an indexed username')
         comment.reply(getListFlairsErr(1, delay))
