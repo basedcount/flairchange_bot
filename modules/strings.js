@@ -46,11 +46,12 @@ function getOptOut() {
     return strings.optOut
 }
 
-//Returns a list of flair changes for the matching 'username'. Includes easter eggs for username == 'flairchange_bot' && 'basedcount_bot'
+//Returns a list of flair changes for the matching 'username'
 function getListFlairs(username, log, delay) {
     let warning = `^(Be aware that some data may be missing, the oldest data I have dates back to 2022-04-25.)\n\n`
     let listFooter = ` ^(Each user can use this command once every ${delay} minutes.)`
 
+    //Easter eggs
     if (username === 'flairchange_bot') {
         return strings.flairsFCBot + '\n\n' + strings.footer + listFooter
     } else if (username === 'basedcount_bot') {
@@ -92,7 +93,13 @@ function getListFlairs(username, log, delay) {
                 msg += `${i + 1}) Started as ${elem} on ${log.dateAdded[i].toUTCString()}.\n\n`
             }
         } else {
-            msg += `${i + 1}) Switched to ${elem} on ${log.dateAdded[i].toUTCString()}.\n\n`
+            if (elem == 'null') {
+                msg += `${i + 1}) Went UNFLAIRED on ${log.dateAdded[i].toUTCString()}.\n\n`
+
+            } else {
+                msg += `${i + 1}) Switched to ${elem} on ${log.dateAdded[i].toUTCString()}.\n\n`
+
+            }
         }
     })
 

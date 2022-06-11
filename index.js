@@ -6,6 +6,7 @@ const leaderboardPos = require('./modules/leaderboardPos')
 const noFlair = require('./modules/unflaired')
 const ngbr = require('./modules/neighbour')
 const { getFlair, getGrass, getUnflaired, getOptOut, getListFlairs, getListFlairsErr } = require('./modules/strings')
+const c = require('./modules/const')
 
 const { CommentStream } = require('snoostorm')
 const cron = require('node-cron')
@@ -25,8 +26,6 @@ const stream = new CommentStream(r, {
     results: 1
 })
 
-const delay = 5 //delay [minutes] between multiple messages to the same user - prevents spam
-const delayMS = delay * 60000 //same value as above but in milliseconds, needed for JS Date functions
 let callers = Array() //Array containing the callers who used the "!flairs" command, antispam
 
 run()
@@ -50,15 +49,7 @@ function run() {
     stream.on('item', comment => {
         if (comment.author_fullname == 't2_mdgp6gdr') return //Comment made by the bot itself, no time to lose here
 
-        let flair = comment.author_flair_text
-        if (flair != null) { //If user is NOT unflaired, parse the flair and save it
-            if (comment.author_flair_richtext[0].a.slice(1, -1) === 'CENTG') //Handles alt flairs
-                flair = 'GreyCentrist'
-            else if (comment.author_flair_richtext[0].a.slice(1, -1) === 'libright2')
-                flair = 'PurpleLibRight'
-            else //Default case
-                flair = flair.substring(flair.indexOf('-') + 2)
-        }
+        let flair = flairText(comment);
 
         (async() => {
             db.findOne({ id: comment.author_fullname }, async(err, res) => { //Check for any already present occurrence
@@ -66,20 +57,25 @@ function run() {
 
                 if (flair === null && res === null) { //Unflaired and not in DB
                     unflaired(comment)
-                    return
+
                 } else if (res === null) { //Flaired, not in DB
                     if (comment.body.includes('!cringe')) {
                         optOut(comment, res, db, 1) //Context 1 handles the new user inserction
+
                     } else {
                         newUser(comment, db, flair)
+
                     }
-                } else if (flair === null && res.unflaired) { //Unflaired, is in DB and is a registered unflaired
+
+                } else if (flair === null && res.flair.at(-1) == 'null') { //Unflaired, is in DB and is a registered unflaired
                     unflaired(comment)
-                    return
+
                 } else if (flair === null && res.flair.at(-1) != flair) { //Is in DB but switched to unflaired
                     flairChangeUnflaired(comment, res, db)
+
                 } else if (res.flair.at(-1) != flair) { //Already present in DB and flair change
                     flairChange(comment, db, flair, res)
+
                 } else { //Generic comment
                     if (comment.body.includes('!cringe')) {
                         optOut(comment, res, db, 0)
@@ -96,6 +92,10 @@ function run() {
     })
 }
 
+
+//SECONDARY FUNCTIONS - called by the main function
+
+
 //Handles all flair change instances
 async function flairChange(comment, db, flair, res) {
     console.log('Flair change!', comment.author.name, 'was', res.flair.at(-1), 'now is', flair)
@@ -107,7 +107,12 @@ async function flairChange(comment, db, flair, res) {
 
     await db.aggregate(leaderboardPosPipe).forEach(log => { aggEntry = log }) //Running aggregation query for current user - necessary for flair changers ranking
 
-    if (!isSpam(res)) { //If user isn't spamming, send message, push to DB. Doesn't push if user is spamming. SPAM: if bot has written to the same user in the last DELAY minutes
+    if (!isSpam(res)) { //If user isn't spamming, send message, push to DB
+        if (res.flair.at(-1) == 'null') { //If user went unflaired and has now flaired up: push to db without sending any message
+            db.updateOne({ id: comment.author_fullname }, { $push: { flair: flair, dateAdded: new Date() } }, err => { if (err) throw err })
+            return
+        }
+
         if (aggEntry != null) { //Touch grass message, for multiple flair changers, only if user is in the top (if entire collection is returned DB crashes!)
             if (aggEntry.position <= 10) {
                 let ratingN = card2ord(aggEntry.position) //Get ordinal number ('second', 'third'...)
@@ -117,7 +122,7 @@ async function flairChange(comment, db, flair, res) {
             }
         } else { //Regular message
             near = isNear(res.flair.at(-1), flair)
-            if (near && !dice(4)) { //If flairs are neighbouring. Only answers a percentage of times (1/4), ends every other time
+            if (near && !dice(c.NEIGHBOUR_DICE)) { //If flairs are neighbouring. Only answers a percentage of times (1/4), ends every other time
                 console.log('\tNeighbour, posting')
                 return
             } else if (near) {
@@ -128,54 +133,33 @@ async function flairChange(comment, db, flair, res) {
         }
 
         if ((res.flair.at(-1) == 'Centrist' && flair == 'GreyCentrist') || (res.flair.at(-1) == 'LibRight' && flair == 'PurpleLibRight')) { //GRACE, remove on later update. If graced still pushes to DB (ofc)
-            db.updateOne({ id: comment.author_fullname }, { $push: { flair: flair, dateAdded: new Date() } }, (err, res) => {
-                if (err) throw err
-            })
+            db.updateOne({ id: comment.author_fullname }, { $push: { flair: flair, dateAdded: new Date() } }, err => { if (err) throw err })
+
             console.log('Graced', comment.author.name)
         } else { //Default case, pushes to DB
-            db.updateOne({ id: comment.author_fullname }, { $push: { flair: flair, dateAdded: new Date() } }, (err, res) => {
-                if (err) throw err
-            })
+            db.updateOne({ id: comment.author_fullname }, { $push: { flair: flair, dateAdded: new Date() } }, err => { if (err) throw err })
+
             comment.reply(msg) //HERE'S WHERE THE MAGIC HAPPENS - let's bother some people
         }
-    } else if (isSpam(res)) { //Spam. Doesn't push to DB
+    } else { //Spam. Doesn't push to DB
         console.log('Tried answering but user', comment.author.name, 'is spamming')
-    }
-
-    if (res.unflaired) { //User was flagged as unflaired
-        await db.updateOne({ id: res.id }, { $unset: { unflaired: true } })
     }
 }
 
 //Detects changes from any flair to unflaired. Toggles the 'unflaired' attribute in the DB
 async function flairChangeUnflaired(comment, res, db) {
     console.log('Flair change!', comment.author.name, 'was', res.flair.at(-1), 'now is UNFLAIRED')
+    if (!isSpam(res)) {
+        let dateStr = getDateStr(res.dateAdded.at(-1))
+        msg = getUnflaired(comment.author.name, res.flair.at(-1), dateStr)
 
-    let dateStr = getDateStr(res.dateAdded.at(-1))
-    msg = getUnflaired(comment.author.name, res.flair.at(-1), dateStr)
+        comment.reply(msg)
 
-    comment.reply(msg)
+        await db.updateOne({ id: res.id }, { $push: { flair: 'null', dateAdded: new Date() } })
 
-    await db.updateOne({ id: res.id }, { $set: { unflaired: true } }) //Legacy, to be removed
-    await db.updateOne({ id: res.id }, { $push: { flair: 'null', dateAdded: new Date() } })
-}
-
-//Pushes a new user to the DB
-async function newUser(comment, db, flair) {
-    await db.insertOne({
-        id: comment.author_fullname,
-        name: comment.author.name,
-        flair: [flair],
-        dateAdded: [new Date()]
-    })
-}
-
-//Checks wether two flairs are adjacent on the Political Compass. True if near, false if not
-function isNear(oldF, newF) {
-    if (ngbr[oldF].includes(newF))
-        return true
-    else
-        return false
+    } else { //Spam. Doesn't push to DB
+        console.log('Tried answering but user', comment.author.name, 'is spamming')
+    }
 }
 
 //Sends a random message reminding users to flair up. Only answers in 1/'dice' cases
@@ -184,7 +168,7 @@ function unflaired(comment) {
 
     let rand = Math.floor(Math.random() * noFlair.length)
 
-    if (dice(10)) {
+    if (dice(c.UNFLAIRED_DICE)) {
         console.log(`Unflaired: ${comment.author.name}`)
         comment.reply(noFlair[rand])
     }
@@ -200,7 +184,7 @@ async function optOut(comment, res, db, context) {
             comment.reply(optOutMsg)
             await db.updateOne({ id: comment.author_fullname }, { $set: { optOut: true } })
         } else {
-            if (dice(5)) { //User has already opted out - only answers 20% of times
+            if (dice(c.OPTOUT_DICE)) { //User has already opted out - only answers 20% of times
                 comment.reply(optOutMsg)
             }
         }
@@ -213,34 +197,6 @@ async function optOut(comment, res, db, context) {
             dateAdded: [new Date()],
             optOut: true
         })
-    }
-}
-
-//Converts a cardinal number(int) to an ordinal one (string), 1 to 10
-function card2ord(param) {
-    switch (param) {
-        case 1:
-            return ''
-        case 2:
-            return 'second'
-        case 3:
-            return 'third'
-        case 4:
-            return 'fourth'
-        case 5:
-            return 'fifth'
-        case 6:
-            return 'sixth'
-        case 7:
-            return 'seventh'
-        case 8:
-            return 'eighth'
-        case 9:
-            return 'ninth'
-        case 10:
-            return 'tenth'
-        default:
-            return `number ${param}`
     }
 }
 
@@ -280,6 +236,7 @@ async function leaderboard(db) {
 
 //Handles the "!flairs" command, checks wether a user is spamming said command or not, calls summonListFlairs if user isn't spamming
 function summonListFlairsWrapper(comment, db) {
+    const delayMS = c.SUMMON_DELAY * 60000 // [milliseconds]
     let index
 
     if (callers.find(x => x.id === comment.author_fullname)) { //Is in object...
@@ -298,9 +255,9 @@ function summonListFlairsWrapper(comment, db) {
     } else { //Is not in object, OK
         console.log('Summon: YES - Not in object', comment.author.name)
 
-        if (summonListFlairs(comment, db)) //If param is a reddit username, push to the caller array
+        if (summonListFlairs(comment, db)) { //If param is a reddit username, push to the caller array
             callers.push({ id: comment.author_fullname, date: new Date() })
-
+        }
     }
 }
 
@@ -329,12 +286,43 @@ async function summonListFlairs(comment, db) {
     return true
 }
 
-//Rolls a dice. Returns true if a random int in [0 - d] is equal to d => 1/d cases
-function dice(d) {
-    let rand = Math.floor(Math.random() * d) + 1
 
-    if (d == rand) return true
-    else return false
+//AUXILIARY FUNCTIONS - called by secondary functions
+
+
+//Pushes a new user to the DB
+async function newUser(comment, db, flair) {
+    await db.insertOne({
+        id: comment.author_fullname,
+        name: comment.author.name,
+        flair: [flair],
+        dateAdded: [new Date()]
+    })
+}
+
+//Checks wether two flairs are adjacent on the Political Compass. True if near, false if not
+function isNear(oldF, newF) {
+    if (ngbr[oldF].includes(newF))
+        return true
+    else
+        return false
+}
+
+//Formats a flairs text
+function flairText(comment) {
+    let flair = comment.author_flair_text
+
+    if (flair != null) { //If user is NOT unflaired, parse the flair and save it
+        if (comment.author_flair_richtext[0].a.slice(1, -1) === 'CENTG') { //Handles alt flairs
+            return 'GreyCentrist'
+
+        } else if (comment.author_flair_richtext[0].a.slice(1, -1) === 'libright2') {
+            return 'PurpleLibRight'
+
+        } else { //Default case
+            return flair.substring(flair.indexOf('-') + 2)
+        }
+    } else { return null }
 }
 
 //Formats a Date (object or text mimicking text) as ISO 8601 compliant YYYY-MM-DD
@@ -345,8 +333,49 @@ function getDateStr(param) {
     return dateStr
 }
 
-//Checks wether a comment is spam: not spam if the last flair change was more than 'delayMS' ms ago 
+//Converts a cardinal number(int) to an ordinal one (string), 1 to 10
+function card2ord(param) {
+    switch (param) {
+        case 1:
+            return ''
+        case 2:
+            return 'second'
+        case 3:
+            return 'third'
+        case 4:
+            return 'fourth'
+        case 5:
+            return 'fifth'
+        case 6:
+            return 'sixth'
+        case 7:
+            return 'seventh'
+        case 8:
+            return 'eighth'
+        case 9:
+            return 'ninth'
+        case 10:
+            return 'tenth'
+        default:
+            return `number ${param}`
+    }
+}
+
+
+//UTILITY FUNCTIONS - called by anyone
+
+
+//Rolls a dice. Returns true if a random int in [0 - d] is equal to d => 1/d cases
+function dice(d) {
+    let rand = Math.floor(Math.random() * d) + 1
+
+    if (d == rand) return true
+    else return false
+}
+
+//Checks wether a comment is spam: not spam if the last flair change was more than 'FLAIR_CHANGE_DELAY' minutes ago 
 function isSpam(res) {
+    const delayMS = c.FLAIR_CHANGE_DELAY * 60000 // [milliseconds]
     let now = new Date()
 
     if (now.valueOf() <= res.dateAdded.at(-1).valueOf() + delayMS) return true
