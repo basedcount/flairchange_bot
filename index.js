@@ -37,10 +37,10 @@ function run() {
 
     console.log('Starting up...')
 
-    cron.schedule('0 0 * * *', () => { //Task executed every day, UTC timezone
-        wallOfShame(db) //Updates Wall of shame instantly
+    cron.schedule('0 */6 * * *', () => { //Task executed every six hours, UTC timezone
+        leaderboard(db) //Updates Wall of shame instantly
         setTimeout(() => { //Updates leaderboard after 10 seconds, avoids RATELIMIT
-            leaderboard(db)
+            wallOfShame(db)
         }, 10000)
     }, {
         timezone: 'UTC'
@@ -213,7 +213,7 @@ async function wallOfShame(db) {
         else
             msg += `- ${item.name}\xa0\xa0\xa0-\xa0\xa0\xa0${item.flair.length - 1} flair changes\n\n`
     })
-    msg += '\n*This post is automatically updated every day at midnight UTC.*'
+    msg += '\n*This post is automatically updated every six hours.*'
     r.getSubmission('utwvvg').edit(msg) //Update post
 }
 
@@ -230,7 +230,7 @@ async function leaderboard(db) {
         i++
         msg += `${i}) ${item.name}\xa0\xa0\xa0-\xa0\xa0\xa0${item.size - 1} flair changes\n\n`
     })
-    msg += '\n*This post is automatically updated every day at midnight UTC.*'
+    msg += '\n*This post is automatically updated every six hours.*'
     await r.getSubmission('uuhlu2').edit(msg) //Update post
 }
 
