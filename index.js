@@ -268,7 +268,7 @@ async function summonListFlairs(comment, db) {
 
     if (user == null) { //If no username was provided exit
         console.log('Tried answering but user', comment.author.name, 'didn\'t enter a reddit username')
-        comment.reply(getListFlairsErr(0, delay))
+        comment.reply(getListFlairsErr(0, c.SUMMON_DELAY))
         return false //WARNING - SPAM: errors aren't counted in the antispam count. Should be fixed if abused
     }
 
@@ -277,11 +277,11 @@ async function summonListFlairs(comment, db) {
     log = await db.findOne({ name: username }) //Run query, search for provided username
     if (log == null) {
         console.log('Tried answering but user', comment.author.name, 'didn\'t enter an indexed username')
-        comment.reply(getListFlairsErr(1, delay))
+        comment.reply(getListFlairsErr(1, c.SUMMON_DELAY))
         return false //WARNING - SPAM: errors aren't counted in the antispam count. Should be fixed if abused
     }
 
-    comment.reply(getListFlairs(username, log, delay)) //Reply!
+    comment.reply(getListFlairs(username, log, c.SUMMON_DELAY)) //Reply!
 
     return true
 }
