@@ -139,7 +139,7 @@ async function flairChange(comment, db, flair, res) {
         } else { //Default case, pushes to DB
             db.updateOne({ id: comment.author_fullname }, { $push: { flair: flair, dateAdded: new Date() } }, err => { if (err) throw err })
 
-            comment.reply(msg) //HERE'S WHERE THE MAGIC HAPPENS - let's bother some people
+            //comment.reply(msg) //HERE'S WHERE THE MAGIC HAPPENS - let's bother some people
         }
     } else { //Spam. Doesn't push to DB
         console.log('Tried answering but user', comment.author.name, 'is spamming')
@@ -153,7 +153,7 @@ async function flairChangeUnflaired(comment, res, db) {
         let dateStr = getDateStr(res.dateAdded.at(-1))
         msg = getUnflaired(comment.author.name, res.flair.at(-1), dateStr)
 
-        comment.reply(msg)
+        //comment.reply(msg)
 
         await db.updateOne({ id: res.id }, { $push: { flair: 'null', dateAdded: new Date() } })
 
@@ -170,7 +170,7 @@ function unflaired(comment) {
 
     if (dice(c.UNFLAIRED_DICE)) {
         console.log(`Unflaired: ${comment.author.name}`)
-        comment.reply(noFlair[rand])
+            //comment.reply(noFlair[rand])
     }
 }
 
@@ -181,15 +181,15 @@ async function optOut(comment, res, db, context) {
 
     if (context == 0) { //Normal case, user is already present in the DB
         if (!res.optOut) {
-            comment.reply(optOutMsg)
+            //comment.reply(optOutMsg)
             await db.updateOne({ id: comment.author_fullname }, { $set: { optOut: true } })
         } else {
             if (dice(c.OPTOUT_DICE)) { //User has already opted out - only answers 20% of times
-                comment.reply(optOutMsg)
+                //comment.reply(optOutMsg)
             }
         }
     } else if (context == 1) { //Special case, user isn't present in DB but has requested an optOut
-        comment.reply(optOutMsg)
+        //comment.reply(optOutMsg)
         await db.insertOne({ //Add them + optOut
             id: comment.author_fullname,
             name: comment.author.name,
@@ -268,7 +268,7 @@ async function summonListFlairs(comment, db) {
 
     if (user == null) { //If no username was provided exit
         console.log('Tried answering but user', comment.author.name, 'didn\'t enter a reddit username')
-        comment.reply(getListFlairsErr(0, c.SUMMON_DELAY))
+            //comment.reply(getListFlairsErr(0, c.SUMMON_DELAY))
         return false //WARNING - SPAM: errors aren't counted in the antispam count. Should be fixed if abused
     }
 
@@ -277,11 +277,11 @@ async function summonListFlairs(comment, db) {
     log = await db.findOne({ name: username }) //Run query, search for provided username
     if (log == null) {
         console.log('Tried answering but user', comment.author.name, 'didn\'t enter an indexed username')
-        comment.reply(getListFlairsErr(1, c.SUMMON_DELAY))
+            //comment.reply(getListFlairsErr(1, c.SUMMON_DELAY))
         return false //WARNING - SPAM: errors aren't counted in the antispam count. Should be fixed if abused
     }
 
-    comment.reply(getListFlairs(username, log, c.SUMMON_DELAY)) //Reply!
+    //comment.reply(getListFlairs(username, log, c.SUMMON_DELAY)) //Reply!
 
     return true
 }
