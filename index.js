@@ -214,7 +214,7 @@ async function wallOfShame(db) {
             msg += `- ${item.name}\xa0\xa0\xa0-\xa0\xa0\xa0${item.flair.length - 1} flair changes\n\n`
     })
     msg += '\n*This post is automatically updated every six hours.*'
-    r.getSubmission('utwvvg').edit(msg) //Update post
+        //r.getSubmission('utwvvg').edit(msg) //Update post
 }
 
 //Updates the leaderboard. Post ID is hardcoded
@@ -231,7 +231,7 @@ async function leaderboard(db) {
         msg += `${i}) ${item.name}\xa0\xa0\xa0-\xa0\xa0\xa0${item.size - 1} flair changes\n\n`
     })
     msg += '\n*This post is automatically updated every six hours.*'
-    await r.getSubmission('uuhlu2').edit(msg) //Update post
+        //r.getSubmission('uuhlu2').edit(msg) //Update post
 }
 
 //Handles the "!flairs" command, checks wether a user is spamming said command or not, calls summonListFlairs if user isn't spamming
