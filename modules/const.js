@@ -4,6 +4,7 @@ const c = {
     NEIGHBOUR_DICE: 4, //25% - roll for answer to small shifts (neighbouring quadrants)
     UNFLAIRED_DICE: 10, //10% - roll for answer to unflaired (insult)
     OPTOUT_DICE: 5, //20% - roll for answer to optout (for users who have already opted out)
+    DEBUG: false //Debug mode - if active doesn't send any message nor post
 }
 
 module.exports = c

@@ -37,14 +37,14 @@ function run() {
 
     console.log('Starting up...')
 
-    cron.schedule('0 */6 * * *', () => { //Task executed every six hours, UTC timezone
-        leaderboard(db) //Updates Wall of shame instantly
-        setTimeout(() => { //Updates leaderboard after 10 seconds, avoids RATELIMIT
-            wallOfShame(db)
-        }, 10000)
-    }, {
-        timezone: 'UTC'
-    })
+    if (!c.DEBUG) {
+        cron.schedule('0 */6 * * *', () => { //Task executed every six hours, UTC timezone, only if debug mode is off
+            leaderboard(db) //Updates Leaderboard instantly
+            setTimeout(() => { //Updates Wall of shame after 10 seconds, avoids RATELIMIT
+                wallOfShame(db)
+            }, 10000)
+        }, { timezone: 'UTC' })
+    }
 
     stream.on('item', comment => {
         if (comment.author_fullname == 't2_mdgp6gdr') return //Comment made by the bot itself, no time to lose here
@@ -139,7 +139,7 @@ async function flairChange(comment, db, flair, res) {
         } else { //Default case, pushes to DB
             db.updateOne({ id: comment.author_fullname }, { $push: { flair: flair, dateAdded: new Date() } }, err => { if (err) throw err })
 
-            //comment.reply(msg) //HERE'S WHERE THE MAGIC HAPPENS - let's bother some people
+            reply(comment, msg) //HERE'S WHERE THE MAGIC HAPPENS - let's bother some people
         }
     } else { //Spam. Doesn't push to DB
         console.log('Tried answering but user', comment.author.name, 'is spamming')
@@ -153,7 +153,7 @@ async function flairChangeUnflaired(comment, res, db) {
         let dateStr = getDateStr(res.dateAdded.at(-1))
         msg = getUnflaired(comment.author.name, res.flair.at(-1), dateStr)
 
-        //comment.reply(msg)
+        reply(comment, msg)
 
         await db.updateOne({ id: res.id }, { $push: { flair: 'null', dateAdded: new Date() } })
 
@@ -170,7 +170,7 @@ function unflaired(comment) {
 
     if (dice(c.UNFLAIRED_DICE)) {
         console.log(`Unflaired: ${comment.author.name}`)
-            //comment.reply(noFlair[rand])
+        reply(comment, noFlair[rand])
     }
 }
 
@@ -181,15 +181,15 @@ async function optOut(comment, res, db, context) {
 
     if (context == 0) { //Normal case, user is already present in the DB
         if (!res.optOut) {
-            //comment.reply(optOutMsg)
+            reply(comment, optOutMsg)
             await db.updateOne({ id: comment.author_fullname }, { $set: { optOut: true } })
         } else {
             if (dice(c.OPTOUT_DICE)) { //User has already opted out - only answers 20% of times
-                //comment.reply(optOutMsg)
+                reply(comment, optOutMsg)
             }
         }
     } else if (context == 1) { //Special case, user isn't present in DB but has requested an optOut
-        //comment.reply(optOutMsg)
+        reply(comment, optOutMsg)
         await db.insertOne({ //Add them + optOut
             id: comment.author_fullname,
             name: comment.author.name,
@@ -214,7 +214,7 @@ async function wallOfShame(db) {
             msg += `- ${item.name}\xa0\xa0\xa0-\xa0\xa0\xa0${item.flair.length - 1} flair changes\n\n`
     })
     msg += '\n*This post is automatically updated every six hours.*'
-        //r.getSubmission('utwvvg').edit(msg) //Update post
+    r.getSubmission('utwvvg').edit(msg) //Update post
 }
 
 //Updates the leaderboard. Post ID is hardcoded
@@ -231,7 +231,7 @@ async function leaderboard(db) {
         msg += `${i}) ${item.name}\xa0\xa0\xa0-\xa0\xa0\xa0${item.size - 1} flair changes\n\n`
     })
     msg += '\n*This post is automatically updated every six hours.*'
-        //r.getSubmission('uuhlu2').edit(msg) //Update post
+    r.getSubmission('uuhlu2').edit(msg) //Update post
 }
 
 //Handles the "!flairs" command, checks wether a user is spamming said command or not, calls summonListFlairs if user isn't spamming
@@ -268,7 +268,8 @@ async function summonListFlairs(comment, db) {
 
     if (user == null) { //If no username was provided exit
         console.log('Tried answering but user', comment.author.name, 'didn\'t enter a reddit username')
-            //comment.reply(getListFlairsErr(0, c.SUMMON_DELAY))
+        reply(comment, getListFlairsErr(0, c.SUMMON_DELAY))
+
         return false //WARNING - SPAM: errors aren't counted in the antispam count. Should be fixed if abused
     }
 
@@ -277,11 +278,12 @@ async function summonListFlairs(comment, db) {
     log = await db.findOne({ name: username }) //Run query, search for provided username
     if (log == null) {
         console.log('Tried answering but user', comment.author.name, 'didn\'t enter an indexed username')
-            //comment.reply(getListFlairsErr(1, c.SUMMON_DELAY))
+        reply(comment, getListFlairsErr(1, c.SUMMON_DELAY))
         return false //WARNING - SPAM: errors aren't counted in the antispam count. Should be fixed if abused
     }
 
-    //comment.reply(getListFlairs(username, log, c.SUMMON_DELAY)) //Reply!
+    reply(comment, getListFlairs(username, log, c.SUMMON_DELAY)) //Reply!
+
 
     return true
 }
@@ -380,4 +382,13 @@ function isSpam(res) {
 
     if (now.valueOf() <= res.dateAdded.at(-1).valueOf() + delayMS) return true
     else return false
+}
+
+//Replies to a message, only if DEBUG mode is off
+function reply(comment, msg) {
+    if (!c.DEBUG) {
+        comment.reply(msg)
+    } else {
+        console.log('DEBUG: Not replying')
+    }
 }

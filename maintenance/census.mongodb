@@ -1,0 +1,10 @@
+aggr = [
+    { $project: { _id: 0, flair: { $slice: ['$flair', -1] } } },
+    { $unwind: '$flair'},
+    { $group: { _id: '$flair', n: { $count: {}} }},
+    { $project: { flair: '$_id', num: '$n'}},
+    { $project: { _id: 0, n: 0 }},
+    // { $replaceRoot: { newRoot: { $arrayToObject: [ [ { k: "$flair", v: "$num" } ] ] } } }    //Alt: instead of two fields returns a key value field
+]
+
+db.PCM_users.aggregate(aggr)
