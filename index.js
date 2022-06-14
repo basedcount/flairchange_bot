@@ -213,7 +213,7 @@ async function wallOfShame(db) {
         else
             msg += `- ${item.name}\xa0\xa0\xa0-\xa0\xa0\xa0${item.flair.length - 1} flair changes\n\n`
     })
-    msg += '\n*This post is automatically updated every six hours.*'
+    msg += `\n*This post is automatically updated every six hours. Last update: ${new Date().toUTCString()}.*`
     r.getSubmission('utwvvg').edit(msg) //Update post
 }
 
@@ -230,7 +230,7 @@ async function leaderboard(db) {
         i++
         msg += `${i}) ${item.name}\xa0\xa0\xa0-\xa0\xa0\xa0${item.size - 1} flair changes\n\n`
     })
-    msg += '\n*This post is automatically updated every six hours.*'
+    msg += `\n*This post is automatically updated every six hours. Last update: ${new Date().toUTCString()}.*`
     r.getSubmission('uuhlu2').edit(msg) //Update post
 }
 
@@ -359,7 +359,9 @@ function card2ord(param) {
         case 10:
             return 'tenth'
         default:
-            return `number ${param}`
+            return `
+    number $ { param }
+    `
     }
 }
 
