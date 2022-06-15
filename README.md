@@ -17,7 +17,7 @@ It's possible to summon the bot and inquire regarding an user's flair history. T
 There is a 2 minutes anti spam limit per user for the usage of this command. Errors such as: badly written Reddit usernames or usernames not present in the database will not trigger the anti spam timer.
 
 ## Leaderboard
-The usernames of the top 20 flair changers of the subreddit are saved in the [leaderboard](https://www.reddit.com/user/flairchange_bot/comments/uuhlu2/leaderboard/). This reddit post is automatically updated every six hours starting each day at midnight UTC.
+The usernames of the top 20 flair changers of the subreddit are saved on the [leaderboard](https://www.reddit.com/user/flairchange_bot/comments/uuhlu2/leaderboard/). This reddit post is automatically updated every six hours starting each day at midnight UTC.
 
 ## Unflaired
 Whenever the bot comes across comments from unflaired users (users who didn't set any flair or chose to hide it from the community) there's a 10% chance it'll answer with a custom message. These messages are picked at random from a pool of insults or otherwise rude messages. See the [Disclaimer](#disclaimer) further down this page.
