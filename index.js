@@ -125,7 +125,7 @@ async function flairChange(comment, db, flair, res) {
 
             } else { //Regular message
                 near = isNear(res.flair.at(-1), flair)
-                if (near && dice(c.NEIGHBOUR_DICE)) { //If flairs are neighbouring. Only answers a percentage of times (1/4), ends every other time
+                if (near && percentage(c.NEIGHBOUR_PTG)) { //If flairs are neighbouring. Only answers a percentage of times, ends every other time
                     console.log('\tNeighbour, posting')
                 } else if (near) {
                     console.log('\tNeighbour, not posting')
@@ -165,13 +165,13 @@ async function flairChangeUnflaired(comment, res, db) {
     }
 }
 
-//Sends a random message reminding users to flair up. Only answers in 1/'dice' cases
+//Sends a random message reminding users to flair up. Only answers in a percentage of cases
 function unflaired(comment) {
     if (comment == undefined) return //No clue why this happens. Probably insta-deleted comments
 
     let rand = Math.floor(Math.random() * noFlair.length)
 
-    if (dice(c.UNFLAIRED_DICE)) {
+    if (percentage(c.UNFLAIRED_PTG)) {
         console.log(`Unflaired: ${comment.author.name}`)
         reply(comment, noFlair[rand])
     }
@@ -187,7 +187,7 @@ async function optOut(comment, res, db, context) {
             reply(comment, optOutMsg)
             await db.updateOne({ id: comment.author_fullname }, { $set: { optOut: true } })
         } else {
-            if (dice(c.OPTOUT_DICE)) { //User has already opted out - only answers 20% of times
+            if (percentage(c.OPTOUT_PTG)) { //User has already opted out - only answers a percentage of times
                 reply(comment, optOutMsg)
             }
         }
@@ -278,6 +278,10 @@ async function summonListFlairs(comment, db) {
     }
 
     const username = user[0].slice(2) //Cut 'u/', get RAW username
+
+    if (username == 'me') { //Handles u/me params
+        username = comment.author.name
+    }
 
     log = await db.findOne({ name: username }) //Run query, search for provided username
     if (log == null) {
@@ -372,11 +376,11 @@ function card2ord(param) {
     }
 }
 
-//Rolls a dice. Returns true if a random int in [0 - d] is equal to d => 1/d cases
-function dice(d) {
-    let rand = Math.floor(Math.random() * d) + 1
-
-    if (d == rand) return true
+//RNG. Returns true n% of times, returns false otherwise
+function percentage(n) {
+    let rand = Math.floor(Math.random() * 100)
+    console.log(rand)
+    if (rand <= n) return true
     else return false
 }
 
