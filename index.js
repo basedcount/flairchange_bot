@@ -124,6 +124,7 @@ async function flairChange(comment, db, flair, res) {
             near = isNear(res.flair.at(-1), flair)
             if (near && !dice(c.NEIGHBOUR_DICE)) { //If flairs are neighbouring. Only answers a percentage of times (1/4), ends every other time
                 console.log('\tNeighbour, posting')
+                db.updateOne({ id: comment.author_fullname }, { $push: { flair: flair, dateAdded: new Date() } }, err => { if (err) throw err }) //ERROR, ONLY TEMPORARY FIX DEV TODO: logging is wrong, the two are inverted + on small shifts data doesn't get saved. SEVERE
                 return
             } else if (near) {
                 console.log('\tNeighbour, not posting')
