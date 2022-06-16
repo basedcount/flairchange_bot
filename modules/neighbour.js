@@ -1,3 +1,4 @@
+//The newly added 'Chad' flairs are willingly not present. Changes from chad to regular flairs will always be posted
 const quadrant = {
     AuthRight: ['AuthCenter', 'Right'],
     Right: ['AuthRight', 'LibRight', 'PurpleLibRight'],

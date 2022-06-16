@@ -60,7 +60,7 @@ function getListFlairs(username, log, delay) {
         return strings.flairsUNFLAIRED + '\n\n' + strings.footer + listFooter
     }
 
-    let msg = 'User u/'
+    let msg = `User u/${username}`
     let cringiness
 
     //Cringe level, depending on amounts of flair changes
@@ -76,28 +76,26 @@ function getListFlairs(username, log, delay) {
     else if (log.flair.length >= 2) cringiness = 'uncommonly'
     else if (log.flair.length >= 1) cringiness = 'pretty'
 
-    msg += username
-
-    if (log.flair.length > 1) {
-        msg += ` changed their flair ${log.flair.length} times. This makes them ${cringiness} cringe.`
+    if (log.flairs.length > 1) {
+        msg += ` changed their flair ${log.flairs.length} times. This makes them ${cringiness} cringe.`
     } else {
         msg += ' never changed their flair. This makes them rather based.'
     }
     msg += ' Here\'s their flair history:\n\n'
 
-    log.flair.forEach((elem, i) => {
+    log.flairs.forEach((elem, i) => {
         if (i == 0) {
-            if (log.dateAdded[0] < new Date('2022-04-25')) {
-                msg += `${i + 1}) Started as ${elem} some time before ${new Date('2022-04-25').toUTCString()}.\n\n`
+            if (elem.dateAdded < new Date('2022-04-25')) { //Old log (taken from basedcount_bot)
+                msg += `${i + 1}) Started as ${elem.flair} some time before ${new Date('2022-04-25').toUTCString()}.\n\n`
             } else {
-                msg += `${i + 1}) Started as ${elem} on ${log.dateAdded[i].toUTCString()}.\n\n`
+                msg += `${i + 1}) Started as ${elem.flair} on ${elem.dateAdded.toUTCString()}.\n\n`
             }
         } else {
-            if (elem == 'null') {
-                msg += `${i + 1}) Went UNFLAIRED on ${log.dateAdded[i].toUTCString()}.\n\n`
+            if (elem.flair == 'null') {
+                msg += `${i + 1}) Went UNFLAIRED on ${elem.dateAdded.toUTCString()}.\n\n`
 
             } else {
-                msg += `${i + 1}) Switched to ${elem} on ${log.dateAdded[i].toUTCString()}.\n\n`
+                msg += `${i + 1}) Switched to ${elem.flair} on ${elem.dateAdded.toUTCString()}.\n\n`
 
             }
         }

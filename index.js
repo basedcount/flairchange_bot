@@ -1,8 +1,6 @@
 require('dotenv').config()
 const uri = process.env.MONGODB_URI
 
-const leaderboardPipe = require('./modules/leaderboard')
-const leaderboardPos = require('./modules/leaderboardPos')
 const noFlair = require('./modules/unflaired')
 const ngbr = require('./modules/neighbour')
 const { getFlair, getGrass, getUnflaired, getOptOut, getListFlairs, getListFlairsErr } = require('./modules/strings')
@@ -36,15 +34,16 @@ function run() {
     const db = client.db('flairChangeBot').collection('PCM_users')
 
     console.log('Starting up...')
+    if (c.DEBUG) console.log('Warning, DEBUG mode is ON')
 
-    cron.schedule('0 */6 * * *', () => { //Task executed every six hours, UTC timezone
-        leaderboard(db) //Updates Wall of shame instantly
-        setTimeout(() => { //Updates leaderboard after 10 seconds, avoids RATELIMIT
-            wallOfShame(db)
-        }, 10000)
-    }, {
-        timezone: 'UTC'
-    })
+    if (!c.DEBUG) {
+        cron.schedule('0 */6 * * *', () => { //Task executed every six hours, UTC timezone, only if debug mode is off
+            leaderboard(db) //Updates Leaderboard instantly
+            setTimeout(() => { //Updates Wall of shame after 10 seconds, avoids RATELIMIT
+                wallOfShame(db)
+            }, 10000)
+        }, { timezone: 'UTC' })
+    }
 
     stream.on('item', comment => {
         if (comment.author_fullname == 't2_mdgp6gdr') return //Comment made by the bot itself, no time to lose here
@@ -67,13 +66,13 @@ function run() {
 
                     }
 
-                } else if (flair === null && res.flair.at(-1) == 'null') { //Unflaired, is in DB and is a registered unflaired
+                } else if (flair === null && res.flairs.at(-1).flair == 'null') { //Unflaired, is in DB and is a registered unflaired
                     unflaired(comment)
 
-                } else if (flair === null && res.flair.at(-1) != flair) { //Is in DB but switched to unflaired
+                } else if (flair === null && res.flairs.at(-1).flair != flair) { //Is in DB but switched to unflaired
                     flairChangeUnflaired(comment, res, db)
 
-                } else if (res.flair.at(-1) != flair) { //Already present in DB and flair change
+                } else if (res.flairs.at(-1).flair != flair) { //Already present in DB and flair change
                     flairChange(comment, db, flair, res)
 
                 } else { //Generic comment
@@ -97,49 +96,56 @@ function run() {
 
 
 //Handles all flair change instances
-async function flairChange(comment, db, flair, res) {
-    console.log('Flair change!', comment.author.name, 'was', res.flair.at(-1), 'now is', flair)
+async function flairChange(comment, db, newF, res) {
+    let oldF = res.flairs.at(-1).flair
+    let dateStr = getDateStr(res.flairs.at(-1).dateAdded)
+    let msg = getFlair(comment.author.name, oldF, dateStr, newF)
 
-    let dateStr = getDateStr(res.dateAdded.at(-1))
-    let msg = getFlair(comment.author.name, res.flair.at(-1), dateStr, flair)
-    let aggEntry //Resulting entry from aggregation pipeline
-    let leaderboardPosPipe = leaderboardPos(comment.author_fullname) //MongoDB aggregation pipeline, gets top flair changers
+    console.log('Flair change!', comment.author.name, 'was', oldF, 'now is', newF)
 
-    await db.aggregate(leaderboardPosPipe).forEach(log => { aggEntry = log }) //Running aggregation query for current user - necessary for flair changers ranking
+    if (!isSpam(res)) { //If user isn't spamming, push to DB, send message, 
+        db.updateOne({ id: comment.author_fullname }, {
+            $push: {
+                flairs: { 'flair': newF, 'dateAdded': new Date() },
+                flair: newF,
+                dateAdded: new Date()
+            }
+        }, err => { if (err) throw err })
 
-    if (!isSpam(res)) { //If user isn't spamming, send message, push to DB
-        if (res.flair.at(-1) == 'null') { //If user went unflaired and has now flaired up: push to db without sending any message
-            db.updateOne({ id: comment.author_fullname }, { $push: { flair: flair, dateAdded: new Date() } }, err => { if (err) throw err })
+        if (oldF == 'null') { //If user went unflaired and has now flaired up don't send any message
             return
-        }
 
-        if (aggEntry != null) { //Touch grass message, for multiple flair changers, only if user is in the top (if entire collection is returned DB crashes!)
-            if (aggEntry.position <= 10) {
-                let ratingN = card2ord(aggEntry.position) //Get ordinal number ('second', 'third'...)
+        } else {
+            ldb = await client.db('flairChangeBot').collection('leaderboard').findOne({ id: res.id }) //Leaderboard position, if any
 
-                msg = getGrass(comment.author.name, res.flair.at(-1), dateStr, flair, aggEntry.size, ratingN)
-                console.log('\tNot a grass toucher', comment.author.name)
+            if (ldb != null) { //User is on the leaderboard (touch grass)
+                if (ldb.position <= 10) {
+                    let ratingN = card2ord(ldb.position) //Get ordinal number ('second', 'third'...)
+
+                    msg = getGrass(comment.author.name, oldF, dateStr, newF, ldb.size, ratingN)
+                    console.log('\tNot a grass toucher', comment.author.name)
+                }
+
+            } else { //Regular message
+                near = isNear(oldF, newF)
+                if (near && percentage(c.NEIGHBOUR_PTG)) { //If flairs are neighbouring. Only answers a percentage of times, ends every other time
+                    console.log('\tNeighbour, posting')
+                } else if (near) {
+                    console.log('\tNeighbour, not posting')
+                    return
+                } else {
+                    console.log('\tNot neighbour')
+                }
             }
-        } else { //Regular message
-            near = isNear(res.flair.at(-1), flair)
-            if (near && !dice(c.NEIGHBOUR_DICE)) { //If flairs are neighbouring. Only answers a percentage of times (1/4), ends every other time
-                console.log('\tNeighbour, posting')
+
+            if ((oldF == 'Centrist' && newF == 'GreyCentrist') || (oldF == 'LibRight' && newF == 'PurpleLibRight')) { //GRACE, remove on later update. If graced still pushes to DB (ofc)
+                console.log('Graced', comment.author.name)
                 return
-            } else if (near) {
-                console.log('\tNeighbour, not posting')
-            } else {
-                console.log('\tNot neighbour')
+
             }
-        }
 
-        if ((res.flair.at(-1) == 'Centrist' && flair == 'GreyCentrist') || (res.flair.at(-1) == 'LibRight' && flair == 'PurpleLibRight')) { //GRACE, remove on later update. If graced still pushes to DB (ofc)
-            db.updateOne({ id: comment.author_fullname }, { $push: { flair: flair, dateAdded: new Date() } }, err => { if (err) throw err })
+            reply(comment, msg) //HERE'S WHERE THE MAGIC HAPPENS - let's bother some people
 
-            console.log('Graced', comment.author.name)
-        } else { //Default case, pushes to DB
-            db.updateOne({ id: comment.author_fullname }, { $push: { flair: flair, dateAdded: new Date() } }, err => { if (err) throw err })
-
-            //comment.reply(msg) //HERE'S WHERE THE MAGIC HAPPENS - let's bother some people
         }
     } else { //Spam. Doesn't push to DB
         console.log('Tried answering but user', comment.author.name, 'is spamming')
@@ -148,53 +154,63 @@ async function flairChange(comment, db, flair, res) {
 
 //Detects changes from any flair to unflaired. Toggles the 'unflaired' attribute in the DB
 async function flairChangeUnflaired(comment, res, db) {
-    console.log('Flair change!', comment.author.name, 'was', res.flair.at(-1), 'now is UNFLAIRED')
+    console.log('Flair change!', comment.author.name, 'was', res.flairs.at(-1).flair, 'now is UNFLAIRED')
     if (!isSpam(res)) {
-        let dateStr = getDateStr(res.dateAdded.at(-1))
-        msg = getUnflaired(comment.author.name, res.flair.at(-1), dateStr)
+        let dateStr = getDateStr(res.flairs.at(-1).dateAdded)
+        msg = getUnflaired(comment.author.name, res.flairs.at(-1).flair, dateStr)
 
-        //comment.reply(msg)
+        await db.updateOne({ id: res.id }, {
+            $push: {
+                flairs: { 'flair': 'null', 'dateAdded': new Date() },
+                flair: 'null',
+                dateAdded: new Date()
+            }
+        })
 
-        await db.updateOne({ id: res.id }, { $push: { flair: 'null', dateAdded: new Date() } })
+        reply(comment, msg)
 
     } else { //Spam. Doesn't push to DB
         console.log('Tried answering but user', comment.author.name, 'is spamming')
     }
 }
 
-//Sends a random message reminding users to flair up. Only answers in 1/'dice' cases
+//Sends a random message reminding users to flair up. Only answers in a percentage of cases
 function unflaired(comment) {
     if (comment == undefined) return //No clue why this happens. Probably insta-deleted comments
 
     let rand = Math.floor(Math.random() * noFlair.length)
 
-    if (dice(c.UNFLAIRED_DICE)) {
+    if (percentage(c.UNFLAIRED_PTG)) {
         console.log(`Unflaired: ${comment.author.name}`)
-            //comment.reply(noFlair[rand])
+        reply(comment, noFlair[rand])
     }
 }
 
-//Handles optOut requests. Params: comment object, result returned from DB query, database object, context: 0: user already present, 1: user not present
+//[DEPRECATED] Handles optOut requests. Params: comment object, result returned from DB query, database object, context: 0: user already present, 1: user not present
 async function optOut(comment, res, db, context) {
     const optOutMsg = getOptOut()
     console.log('Opt-out:', comment.author.name)
 
     if (context == 0) { //Normal case, user is already present in the DB
         if (!res.optOut) {
-            //comment.reply(optOutMsg)
+            reply(comment, optOutMsg)
             await db.updateOne({ id: comment.author_fullname }, { $set: { optOut: true } })
         } else {
-            if (dice(c.OPTOUT_DICE)) { //User has already opted out - only answers 20% of times
-                //comment.reply(optOutMsg)
+            if (percentage(c.OPTOUT_PTG)) { //User has already opted out - only answers a percentage of times
+                reply(comment, optOutMsg)
             }
         }
     } else if (context == 1) { //Special case, user isn't present in DB but has requested an optOut
-        //comment.reply(optOutMsg)
+        reply(comment, optOutMsg)
         await db.insertOne({ //Add them + optOut
             id: comment.author_fullname,
             name: comment.author.name,
             flair: [flair],
             dateAdded: [new Date()],
+            flairs: [{
+                'flair': flair,
+                'dateAdded': new Date()
+            }],
             optOut: true
         })
     }
@@ -206,15 +222,15 @@ async function wallOfShame(db) {
 
     console.log('Updating Wall of shame')
 
-    cursor = db.find({ optOut: true }, { sort: { _id: 1 }, projection: { _id: 0, dateAdded: 0, id: 0, optOut: 0 } }) //Run query, returns a cursor (see MongoDB docs)
+    cursor = db.find({ optOut: true }, { sort: { _id: 1 }, projection: { _id: 0, name: 1, flairs: 1 } })
     await cursor.forEach(item => {
-        if (item.flair.length - 1 == 1)
-            msg += `- ${item.name}\xa0\xa0\xa0-\xa0\xa0\xa0${item.flair.length - 1} flair change\n\n`
+        if (item.flairs.length - 1 == 1)
+            msg += `- ${item.name}\xa0\xa0\xa0-\xa0\xa0\xa0${item.flairs.length - 1} flair change\n\n`
         else
-            msg += `- ${item.name}\xa0\xa0\xa0-\xa0\xa0\xa0${item.flair.length - 1} flair changes\n\n`
+            msg += `- ${item.name}\xa0\xa0\xa0-\xa0\xa0\xa0${item.flairs.length - 1} flair changes\n\n`
     })
-    msg += '\n*This post is automatically updated every six hours.*'
-        //r.getSubmission('utwvvg').edit(msg) //Update post
+    msg += `\n*This post is automatically updated every six hours. Last update: ${new Date().toUTCString()}.*`
+    r.getSubmission('utwvvg').edit(msg) //Update post
 }
 
 //Updates the leaderboard. Post ID is hardcoded
@@ -223,18 +239,20 @@ async function leaderboard(db) {
 
     console.log('Updating Leaderboard')
 
-    cursor = db.aggregate(leaderboardPipe) //Run query, returns a cursor (see MongoDB docs)
+    cursor = client.db('flairChangeBot').collection('leaderboard').find()
+
     i = 0 //counter needs to be implemented manually, cursor.forEach != array.forEach
     await cursor.forEach(item => {
         if (i >= 20) return //Only show the top 20 (from 0 to 19)
         i++
         msg += `${i}) ${item.name}\xa0\xa0\xa0-\xa0\xa0\xa0${item.size - 1} flair changes\n\n`
     })
-    msg += '\n*This post is automatically updated every six hours.*'
-        //r.getSubmission('uuhlu2').edit(msg) //Update post
+    msg += `\n*This post is automatically updated every six hours. Last update: ${new Date().toUTCString()}.*`
+    r.getSubmission('uuhlu2').edit(msg) //Update post
 }
 
-//Handles the "!flairs" command, checks wether a user is spamming said command or not, calls summonListFlairs if user isn't spamming
+//Handles the "!flairs" command, checks wether a user is spamming said command or not, calls summonListFlairs if user isn't spamming.
+//Callers are saved in a 'callers' object, along with the timestamp of their last call
 function summonListFlairsWrapper(comment, db) {
     const delayMS = c.SUMMON_DELAY * 60000 // [milliseconds]
     let index
@@ -261,27 +279,35 @@ function summonListFlairsWrapper(comment, db) {
     }
 }
 
-//Composes a message for the flair history of a user
+//Composes a message for the flair history of a user. Returns true if succesful, false on an error
 async function summonListFlairs(comment, db) {
     const regexReddit = /u\/[A-Za-z0-9_-]+/gm //Regex matching a reddit username:A-Z, a-z, 0-9, _, -
     const user = comment.body.match(regexReddit) //Extract username 'u/NAME' from the message, according to the REGEX
 
     if (user == null) { //If no username was provided exit
         console.log('Tried answering but user', comment.author.name, 'didn\'t enter a reddit username')
-            //comment.reply(getListFlairsErr(0, c.SUMMON_DELAY))
+        reply(comment, getListFlairsErr(0, c.SUMMON_DELAY))
+
         return false //WARNING - SPAM: errors aren't counted in the antispam count. Should be fixed if abused
     }
 
-    const username = user[0].slice(2) //Cut 'u/', get RAW username
+    let username
+
+    if (user == 'u/me') { //Handles u/me param
+        username = comment.author.name
+
+    } else {
+        username = user[0].slice(2) //Cut 'u/', get RAW username
+    }
 
     log = await db.findOne({ name: username }) //Run query, search for provided username
     if (log == null) {
         console.log('Tried answering but user', comment.author.name, 'didn\'t enter an indexed username')
-            //comment.reply(getListFlairsErr(1, c.SUMMON_DELAY))
+        reply(comment, getListFlairsErr(1, c.SUMMON_DELAY))
         return false //WARNING - SPAM: errors aren't counted in the antispam count. Should be fixed if abused
     }
 
-    //comment.reply(getListFlairs(username, log, c.SUMMON_DELAY)) //Reply!
+    reply(comment, getListFlairs(username, log, c.SUMMON_DELAY)) //Reply!
 
     return true
 }
@@ -296,7 +322,11 @@ async function newUser(comment, db, flair) {
         id: comment.author_fullname,
         name: comment.author.name,
         flair: [flair],
-        dateAdded: [new Date()]
+        dateAdded: [new Date()],
+        flairs: [{
+            'flair': flair,
+            'dateAdded': new Date()
+        }]
     })
 }
 
@@ -333,6 +363,10 @@ function getDateStr(param) {
     return dateStr
 }
 
+
+//UTILITY FUNCTIONS - called by anyone
+
+
 //Converts a cardinal number(int) to an ordinal one (string), 1 to 10
 function card2ord(param) {
     switch (param) {
@@ -357,19 +391,15 @@ function card2ord(param) {
         case 10:
             return 'tenth'
         default:
-            return `number ${param}`
+            return `number ${ param }`
     }
 }
 
+//RNG. Returns true n% of times, returns false otherwise
+function percentage(n) {
+    let rand = Math.floor(Math.random() * 100)
 
-//UTILITY FUNCTIONS - called by anyone
-
-
-//Rolls a dice. Returns true if a random int in [0 - d] is equal to d => 1/d cases
-function dice(d) {
-    let rand = Math.floor(Math.random() * d) + 1
-
-    if (d == rand) return true
+    if (rand <= n) return true
     else return false
 }
 
@@ -378,6 +408,15 @@ function isSpam(res) {
     const delayMS = c.FLAIR_CHANGE_DELAY * 60000 // [milliseconds]
     let now = new Date()
 
-    if (now.valueOf() <= res.dateAdded.at(-1).valueOf() + delayMS) return true
+    if (now.valueOf() <= res.flairs.at(-1).dateAdded.valueOf() + delayMS) return true
     else return false
+}
+
+//Replies to a message, only if DEBUG mode is off
+function reply(comment, msg) {
+    if (!c.DEBUG) {
+        comment.reply(msg)
+    } else {
+        console.log('DEBUG: Not replying')
+    }
 }
