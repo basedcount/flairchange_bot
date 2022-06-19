@@ -24,20 +24,20 @@ const ins = {
 
 //String for regular flair changes
 function getFlair(author, flairOld, dateStr, flairNew) {
-    let intro = `Did you just change your flair, u/${author}? Last time I checked you were **${flairOld}** on ${dateStr}. How come now you are **${flairNew}**? Have you perhaps shifted your ideals? Because that's cringe, you know?`
+    let intro = `Did you just change your flair, u/${author}? Last time I checked you were ${flairArticled(flairOld)} on ${dateStr}. How come now you are ${flairArticled(flairNew)}? Have you perhaps shifted your ideals? Because that's cringe, you know?`
     return intro + ins[flairNew] + strings.footer
 }
 
 //String for leaderboard (needs to touch grass)
 function getGrass(author, flairOld, dateStr, flairNew, size, pos) {
-    let intro = `Did you just change your flair, u/${author}? Last time I checked you were **${flairOld}** on ${dateStr}. How come now you are **${flairNew}**? Have you perhaps shifted your ideals? Because that's cringe, you know?`
+    let intro = `Did you just change your flair, u/${author}? Last time I checked you were ${flairArticled(flairOld)} on ${dateStr}. How come now you are ${flairArticled(flairNew)}? Have you perhaps shifted your ideals? Because that's cringe, you know?`
     let grass = `\n\nOh and by the way. You have already changed your flair ${size} times, making you the ${pos} largest flair changer in this sub.\nGo touch some fucking grass.`
     return intro + grass + strings.footer
 }
 
 //String for switch from flair to unflaired
 function getUnflaired(author, flairOld, dateStr) {
-    let unflairedChangeIntro = `Did you just change your flair, u/${author}? Last time I checked you were **${flairOld}** on ${dateStr}. How come now you are **unflaired**? Not only you are a dirty flair changer, you also willingly chose to join those subhumans.`
+    let unflairedChangeIntro = `Did you just change your flair, u/${author}? Last time I checked you were ${flairArticled(flairOld)} on ${dateStr}. How come now you are **unflaired**? Not only you are a dirty flair changer, you also willingly chose to join those subhumans.`
     return unflairedChangeIntro + strings.unflairedChangeOutro + strings.footer
 }
 
@@ -104,6 +104,7 @@ function getListFlairs(username, log, delay) {
     return msg + warning + strings.footer + listFooter
 }
 
+//Handles different kinds of errors when summoning
 function getListFlairsErr(context, delay) {
     let footer = `^(I am a bot, my mission is to spot cringe flair changers. You can check a user's history with the) **^( !flairs u/<name>)** ^(command. Each user can use this command once every ${delay} minutes.)`
     let msg
@@ -114,6 +115,23 @@ function getListFlairsErr(context, delay) {
         msg = "Sorry, that username doesn't appear in my database, I can't provide any flair history.  \nRemember that reddit usernames are CaSe SeNsItIvE\n\n"
     }
     return msg + footer
+}
+
+//Returns a flair preceded by the appropriate indefinite article [a, an]. Special cases for 'Right' (centre) and 'Left' (centre)
+function flairArticled(src) {
+    let left = /left(?<!authleft|libleft)/gmi //Matches 'left' but not 'libleft' nor 'authleft'
+    let right = /right(?<!authright|libright)/gmi //Same for 'right'
+
+    if (src.match(left) || src.match(right)) src += 'ist' //Leftist / Rightist
+
+    if (isVowel(src.charAt(0).toLowerCase())) return `an **${src}**`
+    else return `a **${src}**`
+
+
+    function isVowel(l) {
+        if (l == 'a' || l == 'e' || l == 'i' || l == 'o' || l == 'u') return true
+        else return false
+    }
 }
 
 module.exports = {
