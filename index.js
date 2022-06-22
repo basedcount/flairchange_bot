@@ -1,5 +1,6 @@
 require('dotenv').config()
 const uri = process.env.MONGODB_URI
+const basedUri = process.env.BASED_URI
 
 const noFlair = require('./modules/unflaired')
 const ngbr = require('./modules/neighbour')
@@ -12,6 +13,7 @@ const Snoowrap = require('snoowrap')
 const MongoClient = require('mongodb').MongoClient
 
 const client = new MongoClient(uri)
+const basedClient = new MongoClient(basedUri)
 const r = new Snoowrap({
     userAgent: 'flairchange_bot v1.0.0; A bot detecting user flair changes, by u/Nerd02',
     clientId: process.env.CLIENT_ID,
@@ -31,7 +33,10 @@ run()
 //Main function
 function run() {
     client.connect()
+    basedClient.connect()
+
     const db = client.db('flairChangeBot').collection('PCM_users')
+    const based = basedClient.db('dataBased').collection('users')
 
     console.log('Starting up...')
     if (c.DEBUG) console.log('Warning, DEBUG mode is ON')
@@ -85,7 +90,7 @@ function run() {
 
         if (comment.body.includes('!flairs')) { //The bot was summoned using the "!flairs" command
             setTimeout(() => {
-                    summonListFlairsWrapper(comment, db)
+                    summonListFlairsWrapper(comment, db, based)
                 }, 10000) //Wait 10 seconds (in case of both flair change and summon, avoid ratelimit)
         }
     })
@@ -253,7 +258,7 @@ async function leaderboard(db) {
 
 //Handles the "!flairs" command, checks wether a user is spamming said command or not, calls summonListFlairs if user isn't spamming.
 //Callers are saved in a 'callers' object array, along with the timestamp of their last call
-function summonListFlairsWrapper(comment, db) {
+function summonListFlairsWrapper(comment, db, based) {
     const delayMS = c.SUMMON_DELAY * 60000 // [milliseconds]
     let index
 
@@ -261,7 +266,7 @@ function summonListFlairsWrapper(comment, db) {
         if (callers.find(x => x.date.valueOf() + delayMS < new Date())) { //Is in object but isn't spamming
             console.log('Summon: YES - In object and match criteria', comment.author.name)
 
-            if (summonListFlairs(comment, db)) { //If param is a reddit username, update in the caller array
+            if (summonListFlairs(comment, db, based)) { //If param is a reddit username, update in the caller array
                 console.log('\tUpdating...')
                 index = callers.findIndex(x => x.id === comment.author_fullname)
                 callers[index].date = new Date()
@@ -273,14 +278,14 @@ function summonListFlairsWrapper(comment, db) {
     } else { //Is not in object, OK
         console.log('Summon: YES - Not in object', comment.author.name)
 
-        if (summonListFlairs(comment, db)) { //If param is a reddit username, push to the caller array
+        if (summonListFlairs(comment, db, based)) { //If param is a reddit username, push to the caller array
             callers.push({ id: comment.author_fullname, date: new Date() })
         }
     }
 }
 
 //Composes a message for the flair history of a user. Returns true if succesful, false on an error
-async function summonListFlairs(comment, db) {
+async function summonListFlairs(comment, db, based) {
     const regexReddit = /u\/[A-Za-z0-9_-]+/gm //Regex matching a reddit username:A-Z, a-z, 0-9, _, -
     const user = comment.body.match(regexReddit) //Extract username 'u/NAME' from the message, according to the REGEX
 
@@ -306,8 +311,9 @@ async function summonListFlairs(comment, db) {
         reply(comment, getListFlairsErr(1, c.SUMMON_DELAY))
         return false //WARNING - SPAM: errors aren't counted in the antispam count. Should be fixed if abused
     }
+    let pills = await isBased(username, based) //Get the number of pills (if any)
 
-    reply(comment, getListFlairs(username, log, c.SUMMON_DELAY)) //Reply!
+    reply(comment, getListFlairs(username, log, c.SUMMON_DELAY, pills)) //Reply!
 
     return true
 }
@@ -417,6 +423,20 @@ function reply(comment, msg) {
     if (!c.DEBUG) {
         comment.reply(msg)
     } else {
-        console.log('DEBUG: Not replying')
+        console.log(`DEBUG:\n${msg}`)
     }
+}
+
+//Returns 0 if a user is not based (and has pills), returns their number of pills if they are
+async function isBased(username, based) {
+    const pipe = [{
+        $match: { pills: { $not: { $size: 0 } }, name: username }
+    }, {
+        $project: { _id: 0, pills: { $size: '$pills' } }
+    }]
+
+    const output = await based.aggregate(pipe).toArray()
+
+    if (output.length == 0) return 0
+    else return output[0].pills
 }

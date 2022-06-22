@@ -47,7 +47,7 @@ function getOptOut() {
 }
 
 //Returns a list of flair changes for the matching 'username'
-function getListFlairs(username, log, delay) {
+function getListFlairs(username, log, delay, pills) {
     let warning = `^(Be aware that some data may be missing, the oldest data I have dates back to 2022-04-25.)\n\n`
     let listFooter = ` ^(Each user can use this command once every ${delay} minutes.)`
 
@@ -100,6 +100,9 @@ function getListFlairs(username, log, delay) {
             }
         }
     })
+
+    if (pills === 1) msg += `They have ${pills} pill, check it out on [basedcount.com](https://basedcount.com/u/${username}).\n\n`
+    else if (pills > 1) msg += `They have ${pills} pills, check them out on [basedcount.com](https://basedcount.com/u/${username}).\n\n`
 
     return msg + warning + strings.footer + listFooter
 }
