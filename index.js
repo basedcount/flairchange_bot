@@ -252,13 +252,13 @@ async function leaderboard(db) {
 }
 
 //Handles the "!flairs" command, checks wether a user is spamming said command or not, calls summonListFlairs if user isn't spamming.
-//Callers are saved in a 'callers' object, along with the timestamp of their last call
+//Callers are saved in a 'callers' object array, along with the timestamp of their last call
 function summonListFlairsWrapper(comment, db) {
     const delayMS = c.SUMMON_DELAY * 60000 // [milliseconds]
     let index
 
     if (callers.find(x => x.id === comment.author_fullname)) { //Is in object...
-        if (callers.find(x => x.date.valueOf() + delayMS < new Date())) { //Is in object and matches criteria
+        if (callers.find(x => x.date.valueOf() + delayMS < new Date())) { //Is in object but isn't spamming
             console.log('Summon: YES - In object and match criteria', comment.author.name)
 
             if (summonListFlairs(comment, db)) { //If param is a reddit username, update in the caller array
@@ -267,7 +267,7 @@ function summonListFlairsWrapper(comment, db) {
                 callers[index].date = new Date()
             }
 
-        } else { //Is in object and does NOT match criteria
+        } else { //Is in object and is spamming
             console.log('Summon: NO - In object and doesn\'t match criteria', comment.author.name)
         }
     } else { //Is not in object, OK
@@ -300,7 +300,7 @@ async function summonListFlairs(comment, db) {
         username = user[0].slice(2) //Cut 'u/', get RAW username
     }
 
-    log = await db.findOne({ name: username }) //Run query, search for provided username
+    log = await db.findOne({ name: { $regex: new RegExp(username, 'i') } }) //Run query, search for provided username - REGEX makes it case insensitive
     if (log == null) {
         console.log('Tried answering but user', comment.author.name, 'didn\'t enter an indexed username')
         reply(comment, getListFlairsErr(1, c.SUMMON_DELAY))

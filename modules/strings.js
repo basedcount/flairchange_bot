@@ -1,5 +1,5 @@
 const strings = {
-    outro: `\n\n*"You have the right to change your mind, as I have the right to shame you for doing so." - Anonymous*`,
+    // outro: `\n\n*"You have the right to change your mind, as I have the right to shame you for doing so." - Anonymous*`, //unused
     footer: `\n\n^(I am a bot, my mission is to spot cringe flair changers. If you want to check another user's flair history write) **^(!flairs u/<name>)** ^(in a comment. Have a look at my [FAQ](https://www.reddit.com/user/flairchange_bot/comments/uf7kuy/bip_bop) and the [leaderboard](https://www.reddit.com/user/flairchange_bot/comments/uuhlu2/leaderboard).)`,
     unflairedChangeOutro: `\n\nYou are beyond cringe, you are disgusting and deserving of all the downvotes you are going to get. Repent now and pick a new flair before it's too late.`,
     optOut: `You are both cringe and a coward, however [I no longer offer opt outs](https://www.reddit.com/user/flairchange_bot/comments/v8f90t/about_the_opt_out_feature/?utm_source=share&utm_medium=web2x&context=3).  \nI'll keep bothering you as much as I do with any other user. Sorry, not sorry.`,
@@ -112,7 +112,7 @@ function getListFlairsErr(context, delay) {
     if (context == 0) {
         msg = "That doesn't look correct. Enter a proper reddit username.\n\n"
     } else if (context == 1) {
-        msg = "Sorry, that username doesn't appear in my database, I can't provide any flair history.  \nRemember that reddit usernames are CaSe SeNsItIvE\n\n"
+        msg = "Sorry, that username doesn't appear in my database, I can't provide any flair history."
     }
     return msg + footer
 }
