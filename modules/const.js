@@ -7,4 +7,4 @@ const c = {
     DEBUG: false //Debug mode - if active doesn't send any message nor post
 }
 
-module.exports = c
+export default c

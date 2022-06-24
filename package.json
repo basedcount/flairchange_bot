@@ -27,5 +27,6 @@
         "node-cron": "^3.0.0",
         "snoostorm": "^1.5.2",
         "snoowrap": "^1.23.0"
-    }
+    },
+    "type": "module"
 }

@@ -137,7 +137,7 @@ function flairArticled(src) {
     }
 }
 
-module.exports = {
+export {
     getFlair,
     getGrass,
     getUnflaired,

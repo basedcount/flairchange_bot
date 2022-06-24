@@ -13,4 +13,4 @@ const responses = [
     "Roses are red,  \n violets are blue;  \n flair changing is cringe  \n and so are you."
 ]
 
-module.exports = responses
+export default responses

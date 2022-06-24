@@ -13,4 +13,4 @@ const quadrant = {
     GreyCentrist: ['Centrist']
 }
 
-module.exports = quadrant
+export default quadrant

@@ -1,16 +1,16 @@
-require('dotenv').config()
+import 'dotenv/config';
+import { CommentStream } from 'snoostorm'
+import cron from 'node-cron'
+import Snoowrap from 'snoowrap'
+import { MongoClient } from 'mongodb'
+
+import noFlair from './modules/unflaired.js'
+import ngbr from './modules/neighbour.js'
+import { getFlair, getGrass, getUnflaired, getOptOut, getListFlairs, getListFlairsErr } from './modules/strings.js'
+import c from './modules/const.js'
+
 const uri = process.env.MONGODB_URI
 const basedUri = process.env.BASED_URI
-
-const noFlair = require('./modules/unflaired')
-const ngbr = require('./modules/neighbour')
-const { getFlair, getGrass, getUnflaired, getOptOut, getListFlairs, getListFlairsErr } = require('./modules/strings')
-const c = require('./modules/const')
-
-const { CommentStream } = require('snoostorm')
-const cron = require('node-cron')
-const Snoowrap = require('snoowrap')
-const MongoClient = require('mongodb').MongoClient
 
 const client = new MongoClient(uri)
 const basedClient = new MongoClient(basedUri)
@@ -121,7 +121,7 @@ async function flairChange(comment, db, newF, res) {
             return
 
         } else {
-            ldb = await client.db('flairChangeBot').collection('leaderboard').findOne({ id: res.id }) //Leaderboard position, if any
+            let ldb = await client.db('flairChangeBot').collection('leaderboard').findOne({ id: res.id }) //Leaderboard position, if any
 
             if (ldb != null) { //User is on the leaderboard (touch grass)
                 if (ldb.position <= 10) {
@@ -132,7 +132,7 @@ async function flairChange(comment, db, newF, res) {
                 }
 
             } else { //Regular message
-                near = isNear(oldF, newF)
+                let near = isNear(oldF, newF)
                 if (near && percentage(c.NEIGHBOUR_PTG)) { //If flairs are neighbouring. Only answers a percentage of times, ends every other time
                     console.log('\tNeighbour, posting')
                 } else if (near) {
@@ -164,7 +164,7 @@ async function flairChangeUnflaired(comment, res, db) {
         let dateStr = getDateStr(res.flairs.at(-1).dateAdded)
         msg = getUnflaired(comment.author.name, res.flairs.at(-1).flair, dateStr)
 
-        await db.updateOne({ id: res.id }, {
+        db.updateOne({ id: res.id }, {
             $push: {
                 flairs: { 'flair': 'null', 'dateAdded': new Date() },
                 flair: 'null',
@@ -199,7 +199,7 @@ async function optOut(comment, res, db, context) {
     if (context == 0) { //Normal case, user is already present in the DB
         if (!res.optOut) {
             reply(comment, optOutMsg)
-            await db.updateOne({ id: comment.author_fullname }, { $set: { optOut: true } })
+            db.updateOne({ id: comment.author_fullname }, { $set: { optOut: true } })
         } else {
             if (percentage(c.OPTOUT_PTG)) { //User has already opted out - only answers a percentage of times
                 reply(comment, optOutMsg)
@@ -305,7 +305,7 @@ async function summonListFlairs(comment, db, based) {
         username = user[0].slice(2) //Cut 'u/', get RAW username
     }
 
-    log = await db.findOne({ name: { $regex: new RegExp(username, 'i') } }) //Run query, search for provided username - REGEX makes it case insensitive
+    let log = await db.findOne({ name: { $regex: new RegExp(username, 'i') } }) //Run query, search for provided username - REGEX makes it case insensitive
     if (log == null) {
         console.log('Tried answering but user', comment.author.name, 'didn\'t enter an indexed username')
         reply(comment, getListFlairsErr(1, c.SUMMON_DELAY))
@@ -324,7 +324,7 @@ async function summonListFlairs(comment, db, based) {
 
 //Pushes a new user to the DB
 async function newUser(comment, db, flair) {
-    await db.insertOne({
+    db.insertOne({
         id: comment.author_fullname,
         name: comment.author.name,
         flair: [flair],
