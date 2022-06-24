@@ -50,48 +50,43 @@ function run() {
         }, { timezone: 'UTC' })
     }
 
-    stream.on('item', comment => {
-        try {
-            if (comment.author_fullname == 't2_mdgp6gdr') return //Comment made by the bot itself, no time to lose here
+    stream.on('item', async comment => {
+        if (comment.author_fullname == 't2_mdgp6gdr') return //Comment made by the bot itself, no time to lose here
 
+        try {
             let flair = flairText(comment);
 
-            (async() => {
-                db.findOne({ id: comment.author_fullname }, async(err, res) => { //Check for any already present occurrence
-                    if (err) throw err
+            db.findOne({ id: comment.author_fullname }, async(err, res) => { //Check for any already present occurrence
+                if (err) throw err
 
-                    if (flair === null && res === null) { //Unflaired and not in DB
-                        unflaired(comment)
+                if (flair === null && res === null) { //Unflaired and not in DB
+                    unflaired(comment)
 
-                    } else if (res === null) { //Flaired, not in DB
-                        if (comment.body.includes('!cringe')) {
-                            optOut(comment, res, db, 1) //Context 1 handles the new user inserction
+                } else if (res === null) { //Flaired, not in DB
+                    if (comment.body.includes('!cringe')) {
+                        optOut(comment, res, db, 1) //Context 1 handles the new user inserction
 
-                        } else {
-                            newUser(comment, db, flair)
+                    } else {
+                        newUser(comment, db, flair)
 
-                        }
-
-                    } else if (flair === null && res.flairs.at(-1).flair == 'null') { //Unflaired, is in DB and is a registered unflaired
-                        unflaired(comment)
-
-                    } else if (flair === null && res.flairs.at(-1).flair != flair) { //Is in DB but switched to unflaired
-                        flairChangeUnflaired(comment, res, db)
-
-                    } else if (res.flairs.at(-1).flair != flair) { //Already present in DB and flair change
-                        flairChange(comment, db, flair, res)
-
-                    } else { //Generic comment
-                        if (comment.body.includes('!cringe')) {
-                            optOut(comment, res, db, 0)
-                        }
                     }
-                })
-            })()
-        } catch (e) {
-            console.log(e)
+                } else if (flair === null && res.flairs.at(-1).flair == 'null') { //Unflaired, is in DB and is a registered unflaired
+                    unflaired(comment)
 
-        } finally {
+                } else if (flair === null && res.flairs.at(-1).flair != flair) { //Is in DB but switched to unflaired
+                    flairChangeUnflaired(comment, res, db)
+
+                } else if (res.flairs.at(-1).flair != flair) { //Already present in DB and flair change
+                    flairChange(comment, db, flair, res)
+
+                } else { //Generic comment
+                    if (comment.body.includes('!cringe')) {
+                        optOut(comment, res, db, 0)
+                    }
+                }
+            })
+        } catch (e) { console.log(e) } finally {
+
             if (comment.body.includes('!flairs')) { //The bot was summoned using the "!flairs" command
                 setTimeout(() => {
                         summonListFlairsWrapper(comment, db, based)
