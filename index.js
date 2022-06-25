@@ -227,7 +227,7 @@ async function wallOfShame(db) {
 
     console.log('Updating Wall of shame')
 
-    cursor = db.find({ optOut: true }, { sort: { _id: 1 }, projection: { _id: 0, name: 1, flairs: 1 } })
+    let cursor = db.find({ optOut: true }, { sort: { _id: 1 }, projection: { _id: 0, name: 1, flairs: 1 } })
     await cursor.forEach(item => {
         if (item.flairs.length - 1 == 1)
             msg += `- ${item.name}\xa0\xa0\xa0-\xa0\xa0\xa0${item.flairs.length - 1} flair change\n\n`
@@ -244,7 +244,7 @@ async function leaderboard(db) {
 
     console.log('Updating Leaderboard')
 
-    cursor = client.db('flairChangeBot').collection('leaderboard').find()
+    let cursor = client.db('flairChangeBot').collection('leaderboard').find()
 
     i = 0 //counter needs to be implemented manually, cursor.forEach != array.forEach
     await cursor.forEach(item => {
