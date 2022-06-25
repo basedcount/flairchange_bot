@@ -162,7 +162,7 @@ async function flairChangeUnflaired(comment, res, db) {
     console.log('Flair change!', comment.author.name, 'was', res.flairs.at(-1).flair, 'now is UNFLAIRED')
     if (!isSpam(res)) {
         let dateStr = getDateStr(res.flairs.at(-1).dateAdded)
-        msg = getUnflaired(comment.author.name, res.flairs.at(-1).flair, dateStr)
+        let msg = getUnflaired(comment.author.name, res.flairs.at(-1).flair, dateStr)
 
         db.updateOne({ id: res.id }, {
             $push: {
@@ -349,14 +349,14 @@ function flairText(comment) {
     let flair = comment.author_flair_text
 
     if (flair != null) { //If user is NOT unflaired, parse the flair and save it
-        if (flair == undefined || comment.author_flair_richtext[0].a == undefined) {
+        if (flair == undefined) {
             throw `Undefined flair exception: ${comment.author.name}`
         }
 
-        if (comment.author_flair_richtext[0].a.slice(1, -1) === 'CENTG') { //Handles alt flairs
+        if (flair.substring(1, flair.indexOf('-') - 2) == 'CENTG') { //Handles alt flairs
             return 'GreyCentrist'
 
-        } else if (comment.author_flair_richtext[0].a.slice(1, -1) === 'libright2') {
+        } else if (flair.substring(1, flair.indexOf('-') - 2) == 'libright2') {
             return 'PurpleLibRight'
 
         } else { //Default case
