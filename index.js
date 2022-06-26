@@ -246,7 +246,7 @@ async function leaderboard(db) {
 
     let cursor = client.db('flairChangeBot').collection('leaderboard').find()
 
-    i = 0 //counter needs to be implemented manually, cursor.forEach != array.forEach
+    let i = 0 //counter needs to be implemented manually, cursor.forEach != array.forEach
     await cursor.forEach(item => {
         if (i >= 20) return //Only show the top 20 (from 0 to 19)
         i++
