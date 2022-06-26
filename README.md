@@ -5,7 +5,7 @@ Both current and historical data are collected in a database. Whenever a flair c
 
 ## Flair changes
 The bot will answer to every notable shift on the [political compass](https://i.redd.it/hklcdjt60y531.png) it comes across. Any shift towards quadrants non-adjacent to the starting one or shifts towards the centrist quadrant are considerated notable.  
-For smaller shifts the bot will only post 25% of times (the data will be collected regardless).  
+For smaller shifts the bot will only post 15% of times (the data will be collected regardless).  
 
 Depending on the new flair chosen by the user, they'll receive a slightly different message. If they are among the top 10 flair changers they'll receive a custom message, letting everyone now their position on the [leaderboard](#leaderboard).  
 
@@ -20,7 +20,7 @@ There is a 2 minutes anti spam limit per user for the usage of this command. Err
 The usernames of the top 20 flair changers of the subreddit are saved on the [leaderboard](https://www.reddit.com/user/flairchange_bot/comments/uuhlu2/leaderboard/). This reddit post is automatically updated every six hours starting each day at midnight UTC.
 
 ## Unflaired
-Whenever the bot comes across comments from unflaired users (users who didn't set any flair or chose to hide it from the community) there's a 10% chance it'll answer with a custom message. These messages are picked at random from a pool of insults or otherwise rude messages. See the [Disclaimer](#disclaimer) further down this page.
+Whenever the bot comes across comments from unflaired users (users who didn't set any flair or chose to hide it from the community) there's a 15% chance it'll answer with a custom message. These messages are picked at random from a pool of insults or otherwise rude messages. See the [Disclaimer](#disclaimer) further down this page.
 
 ## Opt out
 The bot used to have an on-demand opt out feature at time of launch. User experience proved this feature to be not necessary, therefore [it has been removed](https://www.reddit.com/user/flairchange_bot/comments/v8f90t/about_the_opt_out_feature/).
