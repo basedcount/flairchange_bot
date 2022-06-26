@@ -26,6 +26,7 @@ const stream = new CommentStream(r, {
     results: 1
 })
 
+const blacklist = ['flairchange_bot', 'SaveVideo']
 let callers = Array() //Array containing the callers who used the "!flairs" command, antispam
 
 run()
@@ -51,7 +52,7 @@ function run() {
     }
 
     stream.on('item', async comment => {
-        if (comment.author_fullname == 't2_mdgp6gdr') return //Comment made by the bot itself, no time to lose here
+        if (blacklist.includes(comment.author.name)) return //Comment made by the bot itself, no time to lose here
 
         try {
             let flair = flairText(comment);
