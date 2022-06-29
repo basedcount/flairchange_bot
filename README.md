@@ -20,7 +20,7 @@ There is a 2 minutes anti spam limit per user for the usage of this command. Err
 The usernames of the top 20 flair changers of the subreddit are saved on the [leaderboard](https://www.reddit.com/user/flairchange_bot/comments/uuhlu2/leaderboard/). This reddit post is automatically updated every six hours starting each day at midnight UTC.
 
 ## Unflaired
-Whenever the bot comes across comments from unflaired users (users who didn't set any flair or chose to hide it from the community) there's a 15% chance it'll answer with a custom message. These messages are picked at random from a pool of insults or otherwise rude messages. See the [Disclaimer](#disclaimer) further down this page.
+Whenever the bot comes across comments from unflaired users (users who didn't set any flair or chose to hide it from the community) there's a 10% chance it'll answer with a custom message. These messages are picked at random from a pool of insults or otherwise rude messages. See the [Disclaimer](#disclaimer) further down this page.
 
 ## Opt out
 The bot used to have an on-demand opt out feature at time of launch. User experience proved this feature to be not necessary, therefore [it has been removed](https://www.reddit.com/user/flairchange_bot/comments/v8f90t/about_the_opt_out_feature/).

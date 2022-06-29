@@ -10,7 +10,7 @@ const responses = [
     "I see no flair next to your name, why are you still talking?",
     "Get a flair or get going.",
     "Cringe and unflaired pilled",
-    "Roses are red,  \n violets are blue;  \n flair changing is cringe  \n and so are you.",
+    "Roses are red,  \n violets are blue;  \n not having a flair is cringe  \n and so are you.",
     "Dear unflaired. You claim your opinion has value, yet you still refuse to flair up. Curious.",
     "Bold of you to assume anyone will care about what you have to say. Get a flair."
 ]

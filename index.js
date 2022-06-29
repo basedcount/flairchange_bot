@@ -86,7 +86,7 @@ function run() {
                     }
                 }
             })
-        } catch (e) { console.log(e) } finally {
+        } catch (e) { console.log(e.toString()) } finally {
 
             if (comment.body.includes('!flairs')) { //The bot was summoned using the "!flairs" command
                 setTimeout(() => {

@@ -14,7 +14,7 @@ const ins = {
     LibRight: "\n\nAre you mad? Pointing a military grade gun at your monitor won't solve much, pal. Come on, put that rifle down and go take a shower.",
     PurpleLibRight: "\n\nNow come on, put your pants back on and go outside, you dirty degen.  \nNo wait, not that way. There's a school over there!",
     LibCenter: "\n\nWait, those were too many words, I'm sure. Maybe you'll understand this, monkey: \"oo oo aah YOU CRINGE ahah ehe\".",
-    LibLeft: "\n\nYeah yeah, I know. In your ideal leftist communne everyone loves each other and no one insults anybody. Guess what? Welcome to the real word. What are you gonna do? Cancel me on twitter?",
+    LibLeft: "\n\nYeah yeah, I know. In your ideal leftist communne everyone loves each other and no one insults anybody. Guess what? Welcome to the real world. What are you gonna do? Cancel me on twitter?",
     Left: "\n\n If Orange was a flair you probably would have picked that, am I right? You watermelon-looking snowflake.",
     AuthLeft: "\n\nWhat? You are hungry? You want food? I fear you've chosen the wrong flair, comrade.",
     AuthCenter: "\n\nThat being said... Based and fellow Auth pilled, welcome home.",
