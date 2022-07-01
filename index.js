@@ -15,7 +15,7 @@ const basedUri = process.env.BASED_URI
 const client = new MongoClient(uri)
 const basedClient = new MongoClient(basedUri)
 const r = new Snoowrap({
-    userAgent: 'flairchange_bot v2.0.0; A bot detecting user flair changes, by u/Nerd02',
+    userAgent: 'flairchange_bot v2.0.1; A bot detecting user flair changes, by u/Nerd02',
     clientId: process.env.CLIENT_ID,
     clientSecret: process.env.CLIENT_SECRET,
     username: process.env.REDDIT_USER,
@@ -44,7 +44,7 @@ function run() {
 
     if (!c.DEBUG) {
         cron.schedule('0 */6 * * *', () => { //Task executed every six hours, UTC timezone, only if debug mode is off
-            leaderboard(db) //Updates Leaderboard instantly
+            leaderboard() //Updates Leaderboard instantly
             setTimeout(() => { //Updates Wall of shame after 10 seconds, avoids RATELIMIT
                 wallOfShame(db)
             }, 10000)
@@ -144,12 +144,6 @@ async function flairChange(comment, db, newF, res) {
                 }
             }
 
-            if ((oldF == 'Centrist' && newF == 'GreyCentrist') || (oldF == 'LibRight' && newF == 'PurpleLibRight')) { //GRACE, remove on later update. If graced still pushes to DB (ofc)
-                console.log('Graced', comment.author.name)
-                return
-
-            }
-
             reply(comment, msg) //HERE'S WHERE THE MAGIC HAPPENS - let's bother some people
 
         }
@@ -240,7 +234,7 @@ async function wallOfShame(db) {
 }
 
 //Updates the leaderboard. Post ID is hardcoded
-async function leaderboard(db) {
+async function leaderboard() {
     let msg = 'This is the leaderboard of the most frequent flair changers of r/PoliticalCompassMemes. If your name appears on this list please turn off your computer and go touch some grass. \n\n'
 
     console.log('Updating Leaderboard')
@@ -378,32 +372,11 @@ function getDateStr(param) {
 //UTILITY FUNCTIONS - called by anyone
 
 
-//Converts a cardinal number(int) to an ordinal one (string), 1 to 10
+//Converts a cardinal number(int) to an ordinal one (string), 1 to 20. Doesn't do anything for bigger numbers
 function card2ord(param) {
-    switch (param) {
-        case 1:
-            return ''
-        case 2:
-            return 'second'
-        case 3:
-            return 'third'
-        case 4:
-            return 'fourth'
-        case 5:
-            return 'fifth'
-        case 6:
-            return 'sixth'
-        case 7:
-            return 'seventh'
-        case 8:
-            return 'eighth'
-        case 9:
-            return 'ninth'
-        case 10:
-            return 'tenth'
-        default:
-            return `number ${ param }`
-    }
+    let nums = ['', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth', 'eleventh', 'twelfth', 'thirteenth', 'fourteenth', 'fifteenth', 'sixteenth', 'seventeenth', 'eighteenth', 'nineteenth', 'twentieth']
+    if (param > nums.length) return `number ${param}`
+    else return nums[param - 1]
 }
 
 //RNG. Returns true n% of times, returns false otherwise

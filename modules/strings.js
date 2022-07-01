@@ -63,17 +63,17 @@ function getListFlairs(username, log, delay, pills) {
     let cringiness
 
     //Cringe level, depending on amounts of flair changes
-    if (log.flair.length >= 50) cringiness = 'infinitely'
-    else if (log.flair.length >= 40) cringiness = 'abismally'
-    else if (log.flair.length >= 30) cringiness = 'immeasurably'
-    else if (log.flair.length >= 20) cringiness = 'unfathomably'
-    else if (log.flair.length >= 15) cringiness = 'extraordinarily'
-    else if (log.flair.length >= 10) cringiness = 'exceptionally'
-    else if (log.flair.length >= 7) cringiness = 'astonishingly'
-    else if (log.flair.length >= 5) cringiness = 'remarkably'
-    else if (log.flair.length >= 3) cringiness = 'especially'
-    else if (log.flair.length >= 2) cringiness = 'uncommonly'
-    else if (log.flair.length >= 1) cringiness = 'pretty'
+    if (log.flairs.length >= 200) cringiness = 'infinitely'
+    else if (log.flairs.length >= 100) cringiness = 'abismally'
+    else if (log.flairs.length >= 50) cringiness = 'immeasurably'
+    else if (log.flairs.length >= 35) cringiness = 'unfathomably'
+    else if (log.flairs.length >= 25) cringiness = 'extraordinarily'
+    else if (log.flairs.length >= 15) cringiness = 'exceptionally'
+    else if (log.flairs.length >= 10) cringiness = 'astonishingly'
+    else if (log.flairs.length >= 7) cringiness = 'remarkably'
+    else if (log.flairs.length >= 5) cringiness = 'especially'
+    else if (log.flairs.length >= 2) cringiness = 'uncommonly'
+    else if (log.flairs.length >= 1) cringiness = 'pretty'
 
     if (log.flairs.length > 1) {
         msg += ` changed their flair ${log.flairs.length} times. This makes them ${cringiness} cringe.`
@@ -85,7 +85,7 @@ function getListFlairs(username, log, delay, pills) {
     log.flairs.forEach((elem, i) => {
         if (i == 0) {
             if (elem.dateAdded < new Date('2022-04-25')) { //Old log (taken from basedcount_bot)
-                msg += `${i + 1}) Started as ${elem.flair} some time before ${new Date('2022-04-25').toUTCString()}.\n\n`
+                msg += `${i + 1}) Started as ${elem.flair} on ${elem.dateAdded.toUTCString()}.\n\n`
             } else {
                 msg += `${i + 1}) Started as ${elem.flair} on ${elem.dateAdded.toUTCString()}.\n\n`
             }
