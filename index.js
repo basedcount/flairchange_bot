@@ -110,13 +110,7 @@ async function flairChange(comment, db, newF, res) {
     console.log('Flair change!', comment.author.name, 'was', oldF, 'now is', newF)
 
     if (!isSpam(res)) { //If user isn't spamming, push to DB, send message, 
-        db.updateOne({ id: comment.author_fullname }, {
-            $push: {
-                flairs: { 'flair': newF, 'dateAdded': new Date() },
-                flair: newF,
-                dateAdded: new Date()
-            }
-        }, err => { if (err) throw err })
+        db.updateOne({ id: comment.author_fullname }, { $push: { flairs: { 'flair': newF, 'dateAdded': new Date() } } }, err => { if (err) throw err })
 
         if (oldF == 'null') { //If user went unflaired and has now flaired up don't send any message
             return
@@ -159,13 +153,7 @@ async function flairChangeUnflaired(comment, res, db) {
         let dateStr = getDateStr(res.flairs.at(-1).dateAdded)
         let msg = getUnflaired(comment.author.name, res.flairs.at(-1).flair, dateStr)
 
-        db.updateOne({ id: res.id }, {
-            $push: {
-                flairs: { 'flair': 'null', 'dateAdded': new Date() },
-                flair: 'null',
-                dateAdded: new Date()
-            }
-        })
+        db.updateOne({ id: res.id }, { $push: { flairs: { 'flair': 'null', 'dateAdded': new Date() } } })
 
         reply(comment, msg)
 
@@ -205,8 +193,6 @@ async function optOut(comment, res, db, context) {
         await db.insertOne({ //Add them + optOut
             id: comment.author_fullname,
             name: comment.author.name,
-            flair: [flair],
-            dateAdded: [new Date()],
             flairs: [{
                 'flair': flair,
                 'dateAdded': new Date()
@@ -322,8 +308,6 @@ async function newUser(comment, db, flair) {
     db.insertOne({
         id: comment.author_fullname,
         name: comment.author.name,
-        flair: [flair],
-        dateAdded: [new Date()],
         flairs: [{
             'flair': flair,
             'dateAdded': new Date()
