@@ -4,7 +4,9 @@ const c = {
     NEIGHBOUR_PTG: 15, //roll for answer to small shifts (neighbouring quadrants)
     UNFLAIRED_PTG: 10, //roll for answer to unflaired (insult)
     OPTOUT_PTG: 20, //roll for answer to optout (for users who have already opted out)
-    DEBUG: false //Debug mode - if active doesn't send any message nor post
+    DEBUG: false, //Debug mode - if active doesn't send any message nor post
+    LEADERBOARD_CNG: 10, //Lowest position for leaderboard positioning (on flair change)
+    LEADERBOARD_POST: 50 //Number of leaderboard entries shown (on reddit post)
 }
 
 export default c

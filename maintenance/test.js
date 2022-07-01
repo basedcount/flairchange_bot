@@ -31,7 +31,7 @@ const r = new Snoowrap({
 (async() => {
 
     await client.connect()
-    const db = client.db('flairChangeBot').collection('PCM_users')
+    const db = client.db('flairChangeBot').collection('users')
 
     let log = await db.findOne({ name: 'Nerd02' })
     console.log(log)

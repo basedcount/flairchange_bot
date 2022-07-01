@@ -15,7 +15,7 @@ const basedUri = process.env.BASED_URI
 const client = new MongoClient(uri)
 const basedClient = new MongoClient(basedUri)
 const r = new Snoowrap({
-    userAgent: 'flairchange_bot v1.0.0; A bot detecting user flair changes, by u/Nerd02',
+    userAgent: 'flairchange_bot v2.0.0; A bot detecting user flair changes, by u/Nerd02',
     clientId: process.env.CLIENT_ID,
     clientSecret: process.env.CLIENT_SECRET,
     username: process.env.REDDIT_USER,
@@ -36,7 +36,7 @@ function run() {
     client.connect()
     basedClient.connect()
 
-    const db = client.db('flairChangeBot').collection('PCM_users')
+    const db = client.db('flairChangeBot').collection('users')
     const based = basedClient.db('dataBased').collection('users')
 
     console.log('Starting up...')
@@ -125,7 +125,7 @@ async function flairChange(comment, db, newF, res) {
             let ldb = await client.db('flairChangeBot').collection('leaderboard').findOne({ id: res.id }) //Leaderboard position, if any
 
             if (ldb != null) { //User is on the leaderboard (touch grass)
-                if (ldb.position <= 10) {
+                if (ldb.position <= c.LEADERBOARD_CNG) {
                     let ratingN = card2ord(ldb.position) //Get ordinal number ('second', 'third'...)
 
                     msg = getGrass(comment.author.name, oldF, dateStr, newF, ldb.size, ratingN)
@@ -249,7 +249,7 @@ async function leaderboard(db) {
 
     let i = 0 //counter needs to be implemented manually, cursor.forEach != array.forEach
     await cursor.forEach(item => {
-        if (i >= 20) return //Only show the top 20 (from 0 to 19)
+        if (i >= c.LEADERBOARD_POST) return //Only show the top 20 (from 0 to 19)
         i++
         msg += `${i}) ${item.name}\xa0\xa0\xa0-\xa0\xa0\xa0${item.size - 1} flair changes\n\n`
     })
