@@ -26,7 +26,7 @@ const stream = new CommentStream(r, {
     results: 1
 })
 
-const blacklist = ['flairchange_bot', 'SaveVideo']
+const blacklist = ['flairchange_bot', 'SaveVideo', 'eazeaze']
 let callers = Array() //Array containing the callers who used the "!flairs" command, antispam
 
 run()
