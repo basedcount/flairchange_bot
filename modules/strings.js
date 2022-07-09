@@ -13,7 +13,7 @@ const ins = {
     Right: "\n\nNo, me targeting you is not part of a conspiracy. And no, your flair count is not rigged. Stop listening to QAnon or the Orange Man and come out of that basement.",
     LibRight: "\n\nAre you mad? Pointing a military grade gun at your monitor won't solve much, pal. Come on, put that rifle down and go take a shower.",
     PurpleLibRight: "\n\nNow come on, put your pants back on and go outside, you dirty degen.  \nNo wait, not that way. There's a school over there!",
-    LibCenter: "\n\nWait, those were too many words, I'm sure. Maybe you'll understand this, monkey: \"oo oo aah YOU CRINGE ahah ehe\".",
+    LibCenter: "\n\nWait, those were too many words, I'm sure. Maybe you'll understand this, monke: \"oo oo aah YOU CRINGE ahah ehe\".",
     LibLeft: "\n\nYeah yeah, I know. In your ideal leftist communne everyone loves each other and no one insults anybody. Guess what? Welcome to the real world. What are you gonna do? Cancel me on twitter?",
     Left: "\n\n If Orange was a flair you probably would have picked that, am I right? You watermelon-looking snowflake.",
     AuthLeft: "\n\nWhat? You are hungry? You want food? I fear you've chosen the wrong flair, comrade.",
@@ -24,12 +24,14 @@ const ins = {
 
 //String for regular flair changes
 function getFlair(author, flairOld, dateStr, flairNew) {
+    if (author.includes('_')) author = escape(author, '_')
     let intro = `Did you just change your flair, u/${author}? Last time I checked you were ${flairArticled(flairOld)} on ${dateStr}. How come now you are ${flairArticled(flairNew)}? Have you perhaps shifted your ideals? Because that's cringe, you know?`
     return intro + ins[flairNew] + strings.footer
 }
 
 //String for leaderboard (needs to touch grass)
 function getGrass(author, flairOld, dateStr, flairNew, size, pos) {
+    if (author.includes('_')) author = escape(author, '_')
     let intro = `Did you just change your flair, u/${author}? Last time I checked you were ${flairArticled(flairOld)} on ${dateStr}. How come now you are ${flairArticled(flairNew)}? Have you perhaps shifted your ideals? Because that's cringe, you know?`
     let grass = `\n\nOh and by the way. You have already changed your flair ${size} times, making you the ${pos} largest flair changer in this sub.\nGo touch some fucking grass.`
     return intro + grass + strings.footer
@@ -37,6 +39,7 @@ function getGrass(author, flairOld, dateStr, flairNew, size, pos) {
 
 //String for switch from flair to unflaired
 function getUnflaired(author, flairOld, dateStr) {
+    if (author.includes('_')) author = escape(author, '_')
     let unflairedChangeIntro = `Did you just change your flair, u/${author}? Last time I checked you were ${flairArticled(flairOld)} on ${dateStr}. How come now you are **unflaired**? Not only you are a dirty flair changer, you also willingly chose to join those subhumans.`
     return unflairedChangeIntro + strings.unflairedChangeOutro + strings.footer
 }
@@ -58,6 +61,8 @@ function getListFlairs(username, log, delay, pills) {
     } else if (username === '--UNFLAIRED--' && log.unflaired) {
         return strings.flairsUNFLAIRED + '\n\n' + strings.footer + listFooter
     }
+
+    if (username.includes('_')) username = escape(username, '_')
 
     let msg = `User u/${username}`
     let cringiness
@@ -114,7 +119,7 @@ function getListFlairsErr(context, delay) {
     if (context == 0) {
         msg = "That doesn't look correct. Enter a proper reddit username.\n\n"
     } else if (context == 1) {
-        msg = "Sorry, that username doesn't appear in my database, I can't provide any flair history."
+        msg = "Sorry, that username doesn't appear in my database, I can't provide any flair history.\n\n"
     }
     return msg + footer
 }
@@ -134,6 +139,16 @@ function flairArticled(src) {
         if (l == 'a' || l == 'e' || l == 'i' || l == 'o' || l == 'u') return true
         else return false
     }
+}
+
+//Escapes all occurrences of 'toEscape' in 'str'
+function escape(str, toEscape) {
+    let res = ''
+    for (let i = 0; i < str.length; i++) {
+        if (str[i] === toEscape) res += `\\${str[i]}`
+        else res += str[i]
+    }
+    return res
 }
 
 export {
