@@ -15,7 +15,7 @@ const basedUri = process.env.BASED_URI
 const client = new MongoClient(uri)
 const basedClient = new MongoClient(basedUri)
 const r = new Snoowrap({
-    userAgent: 'flairchange_bot v2.2.0; A bot detecting user flair changes, by u/Nerd02',
+    userAgent: 'flairchange_bot v2.2.1; A bot detecting user flair changes, by u/Nerd02',
     clientId: process.env.CLIENT_ID,
     clientSecret: process.env.CLIENT_SECRET,
     username: process.env.REDDIT_USER,
@@ -88,7 +88,7 @@ function run() {
             })
         } catch (e) { console.log(e.toString()) } finally {
 
-            if (comment.body.includes('!flairs')) { //The bot was summoned using the "!flairs" command
+            if (comment.body.includes('!flairs') && !comment.body.includes('!flairs u/<name>')) { //The bot was summoned using the "!flairs" command
                 setTimeout(() => {
                         summonListFlairsWrapper(comment, db, based)
                     }, 10000) //Wait 10 seconds (in case of both flair change and summon, avoid ratelimit)
