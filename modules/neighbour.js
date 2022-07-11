@@ -2,8 +2,8 @@
 const quadrant = {
     AuthRight: ['AuthCenter', 'Right'],
     Right: ['AuthRight', 'LibRight', 'PurpleLibRight'],
-    LibRight: ['Right', 'LibCenter'],
-    PurpleLibRight: ['Right', 'LibCenter'],
+    LibRight: ['Right', 'LibCenter', 'PurpleLibRight'],
+    PurpleLibRight: ['Right', 'LibCenter', 'LibRight'],
     LibCenter: ['PurpleLibRight', 'LibRight', 'LibLeft'],
     LibLeft: ['LibCenter', 'Left'],
     Left: ['LibLeft', 'AuthLeft'],

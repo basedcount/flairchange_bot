@@ -15,7 +15,7 @@ const basedUri = process.env.BASED_URI
 const client = new MongoClient(uri)
 const basedClient = new MongoClient(basedUri)
 const r = new Snoowrap({
-    userAgent: 'flairchange_bot v2.2.1; A bot detecting user flair changes, by u/Nerd02',
+    userAgent: 'flairchange_bot v2.2.2; A bot detecting user flair changes, by u/Nerd02',
     clientId: process.env.CLIENT_ID,
     clientSecret: process.env.CLIENT_SECRET,
     username: process.env.REDDIT_USER,
@@ -116,30 +116,32 @@ async function flairChange(comment, db, newF, res) {
             return
 
         } else {
-            let ldb = await client.db('flairChangeBot').collection('leaderboard').findOne({ id: res.id }) //Leaderboard position, if any
+            let ldb = await client.db('flairChangeBot').collection('leaderboard').findOne({ id: res.id }) //Leaderboard position (top 500), if any
 
             if (ldb != null) { //User is on the leaderboard (touch grass)
-                if (ldb.position <= c.LEADERBOARD_CNG) {
+                if (ldb.position <= c.LEADERBOARD_CNG) {  //Separate check, it breaks if they are checked together (can't get position of undefined) 
                     let ratingN = card2ord(ldb.position) //Get ordinal number ('second', 'third'...)
 
                     msg = getGrass(comment.author.name, oldF, dateStr, newF, ldb.size, ratingN)
                     console.log('\tNot a grass toucher', comment.author.name)
-                }
 
-            } else { //Regular message
-                let near = isNear(oldF, newF)
-                if (near && percentage(c.NEIGHBOUR_PTG)) { //If flairs are neighbouring. Only answers a percentage of times, ends every other time
-                    console.log('\tNeighbour, posting')
-                } else if (near) {
-                    console.log('\tNeighbour, not posting')
+                    reply(comment, msg)
                     return
-                } else {
-                    console.log('\tNot neighbour')
                 }
+            } 
+            //Regular message or user on leaderboard but below LEADERBOARD_CNG
+
+            let near = isNear(oldF, newF)
+            if (near && percentage(c.NEIGHBOUR_PTG)) { //If flairs are neighbouring. Only answers a percentage of times, ends every other time
+                console.log('\tNeighbour, posting')
+            } else if (near) {
+                console.log('\tNeighbour, not posting')
+                return
+            } else {
+                console.log('\tNot neighbour')
             }
 
-            reply(comment, msg) //HERE'S WHERE THE MAGIC HAPPENS - let's bother some people
-
+            reply(comment, msg)
         }
     } else { //Spam. Doesn't push to DB
         console.log('Tried answering but user', comment.author.name, 'is spamming')
@@ -367,7 +369,7 @@ function card2ord(param) {
 function percentage(n) {
     let rand = Math.floor(Math.random() * 100)
 
-    if (rand <= n) return true
+    if (rand < n) return true
     else return false
 }
 

@@ -5,7 +5,7 @@ Both current and historical data are collected in a database. Whenever a flair c
 
 ## Flair changes
 The bot will answer to every notable shift on the [political compass](https://i.redd.it/hklcdjt60y531.png) it comes across. Any shift towards quadrants non-adjacent to the starting one or shifts towards the centrist quadrant are considerated notable.  
-For smaller shifts the bot will only post 15% of times (the data will be collected regardless).  
+For smaller shifts the bot will only post 10% of times (the data will be collected regardless).  
 
 Depending on the new flair chosen by the user, they'll receive a slightly different message. If they are among the top 10 flair changers they'll receive a custom message, letting everyone now their position on the [leaderboard](#leaderboard).  
 
