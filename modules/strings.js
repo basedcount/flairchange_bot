@@ -68,20 +68,20 @@ function getListFlairs(username, log, delay, pills) {
     let cringiness
 
     //Cringe level, depending on amounts of flair changes
-    if (log.flairs.length >= 200) cringiness = 'infinitely'
-    else if (log.flairs.length >= 100) cringiness = 'abismally'
-    else if (log.flairs.length >= 50) cringiness = 'immeasurably'
-    else if (log.flairs.length >= 35) cringiness = 'unfathomably'
-    else if (log.flairs.length >= 25) cringiness = 'extraordinarily'
-    else if (log.flairs.length >= 15) cringiness = 'exceptionally'
-    else if (log.flairs.length >= 10) cringiness = 'astonishingly'
-    else if (log.flairs.length >= 7) cringiness = 'remarkably'
-    else if (log.flairs.length >= 5) cringiness = 'especially'
-    else if (log.flairs.length >= 2) cringiness = 'uncommonly'
-    else if (log.flairs.length >= 1) cringiness = 'pretty'
+    if (log.flairs.length > 200) cringiness = 'infinitely'
+    else if (log.flairs.length > 100) cringiness = 'abismally'
+    else if (log.flairs.length > 50) cringiness = 'immeasurably'
+    else if (log.flairs.length > 35) cringiness = 'unfathomably'
+    else if (log.flairs.length > 25) cringiness = 'extraordinarily'
+    else if (log.flairs.length > 15) cringiness = 'exceptionally'
+    else if (log.flairs.length > 10) cringiness = 'astonishingly'
+    else if (log.flairs.length > 7) cringiness = 'remarkably'
+    else if (log.flairs.length > 5) cringiness = 'especially'
+    else if (log.flairs.length > 2) cringiness = 'uncommonly'
+    else if (log.flairs.length > 1) cringiness = 'pretty'
 
     if (log.flairs.length > 1) {
-        msg += ` changed their flair ${log.flairs.length} times. This makes them ${cringiness} cringe.`
+        msg += ` changed their flair ${log.flairs.length - 1} times. This makes them ${cringiness} cringe.`
     } else {
         msg += ' never changed their flair. This makes them rather based.'
     }

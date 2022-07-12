@@ -15,7 +15,7 @@ const basedUri = process.env.BASED_URI
 const client = new MongoClient(uri)
 const basedClient = new MongoClient(basedUri)
 const r = new Snoowrap({
-    userAgent: 'flairchange_bot v2.2.2; A bot detecting user flair changes, by u/Nerd02',
+    userAgent: 'flairchange_bot v2.3.0; A bot detecting user flair changes, by u/Nerd02',
     clientId: process.env.CLIENT_ID,
     clientSecret: process.env.CLIENT_SECRET,
     username: process.env.REDDIT_USER,
@@ -231,7 +231,7 @@ async function leaderboard() {
 
     let i = 0 //counter needs to be implemented manually, cursor.forEach != array.forEach
     await cursor.forEach(item => {
-        if (i >= c.LEADERBOARD_POST) return //Only show the top 20 (from 0 to 19)
+        if (i >= c.LEADERBOARD_POST) return //Only show the top LEADERBOARD_POST
         i++
         msg += `${i}) ${item.name}\xa0\xa0\xa0-\xa0\xa0\xa0${item.size - 1} flair changes\n\n`
     })
