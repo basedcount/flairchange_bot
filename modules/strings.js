@@ -9,7 +9,7 @@ const strings = {
 }
 
 const ins = {
-    AuthRight: "\n\nYeah, yeah we know: 13%, (((them))), [redacted]... Tell us, how are you going to flair the new account you'll make in two weeks?",
+    AuthRight: "\n\nYeah, yeah we know: 13%, [redacted] and vaccines contain microchips... Tell us, how are you going to flair the new account you'll make in two weeks?",
     Right: "\n\nNo, me targeting you is not part of a conspiracy. And no, your flair count is not rigged. Stop listening to QAnon or the Orange Man and come out of that basement.",
     LibRight: "\n\nAre you mad? Pointing a military grade gun at your monitor won't solve much, pal. Come on, put that rifle down and go take a shower.",
     PurpleLibRight: "\n\nNow come on, put your pants back on and go outside, you dirty degen.  \nNo wait, not that way. There's a school over there!",
