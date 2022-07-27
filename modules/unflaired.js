@@ -5,7 +5,7 @@ const responses = [
     "The only thing more cringe than changing one's flair is not having one. You are cringe.",
     // "If you don't get a flair right now I'll have AuthLeft make you face the wall.",         //[removed] to please my technocratic overlords
     "If I were you I'd flair the fuck up rather quickly, the mob will be here in no time.",
-    "Despite making up only 13% of the population, unflaired make 100% of the cringe in this sub.",
+    // "Despite making up only 13% of the population, unflaired make 100% of the cringe in this sub.",  //screw this, I ain't risking another ban
     "For the crime of being unflaired, I hereby condemn you to being downvoted.",
     "I see no flair next to your name, why are you still talking?",
     "Get a flair or get going.",
