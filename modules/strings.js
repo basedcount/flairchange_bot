@@ -69,7 +69,7 @@ function getListFlairs(username, log, delay, pills) {
 
     //Cringe level, depending on amounts of flair changes
     if (log.flairs.length > 200) cringiness = 'infinitely'
-    else if (log.flairs.length > 100) cringiness = 'abismally'
+    else if (log.flairs.length > 100) cringiness = 'abysmally'
     else if (log.flairs.length > 50) cringiness = 'immeasurably'
     else if (log.flairs.length > 35) cringiness = 'unfathomably'
     else if (log.flairs.length > 25) cringiness = 'extraordinarily'
