@@ -92,24 +92,21 @@ function getListFlairs(username, log, delay, pills) {
 
     log.flairs.forEach((elem, i) => {
         if (i == 0) {
-            if (elem.dateAdded < new Date('2022-04-25')) { //Old log (taken from basedcount_bot)
-                msg += `${i + 1}) Started as ${elem.flair} on ${elem.dateAdded.toUTCString()}.\n\n`
-            } else {
-                msg += `${i + 1}) Started as ${elem.flair} on ${elem.dateAdded.toUTCString()}.\n\n`
-            }
+            msg += `${i + 1}) Started as ${elem.flair} on ${parseDate(elem.dateAdded)}.\n\n`
         } else {
             if (elem.flair == 'null') {
-                msg += `${i + 1}) Went UNFLAIRED on ${elem.dateAdded.toUTCString()}.\n\n`
+                msg += `${i + 1}) Went UNFLAIRED on ${parseDate(elem.dateAdded)}.\n\n`
 
             } else {
-                msg += `${i + 1}) Switched to ${elem.flair} on ${elem.dateAdded.toUTCString()}.\n\n`
+                msg += `${i + 1}) Switched to ${elem.flair} on ${parseDate(elem.dateAdded)}.\n\n`
 
             }
         }
     })
 
-    if (pills === 1) msg += `They have ${pills} pill, check it out on [basedcount.com](https://basedcount.com/u/${username}).\n\n`
-    else if (pills > 1) msg += `They have ${pills} pills, check them out on [basedcount.com](https://basedcount.com/u/${username}).\n\n`
+    //Getting rid of these. In due time they'll be replaced by a link to the website's REDESIGN
+    // if (pills === 1) msg += `They have ${pills} pill, check it out on [basedcount.com](https://basedcount.com/u/${username}).\n\n`
+    // else if (pills > 1) msg += `They have ${pills} pills, check them out on [basedcount.com](https://basedcount.com/u/${username}).\n\n`
 
     return msg + strings.footer + listFooter
 }
@@ -152,6 +149,17 @@ function escape(str, toEscape) {
         else res += str[i]
     }
     return res
+}
+
+//Returns a date in the YYYY-MM-DD hh-mm format
+function parseDate(d){
+    const dateStr = d.toISOString();
+    const dateStrMinified = dateStr.substring(0, dateStr.indexOf('T'));
+
+    const hour = d.getHours();
+    const minute = d.getMinutes();
+
+    return `${dateStrMinified} ${hour}:${minute} UTC`;
 }
 
 export {
