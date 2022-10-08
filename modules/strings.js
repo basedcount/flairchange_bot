@@ -81,8 +81,10 @@ function getListFlairs(username, log, delay, pills) {
     else if (log.flairs.length > 2) cringiness = 'uncommonly'
     else if (log.flairs.length > 1) cringiness = 'pretty'
 
-    if (log.flairs.length > 1) {
-        msg += ` changed their flair ${log.flairs.length - 1} times. This makes them ${cringiness} cringe.`
+    if (log.flairs.length > 2) {
+        msg += ` changed their flair ${log.flairs.length - 1} times. This makes them ${cringiness} cringe.` //Plural
+    } else if (log.flairs.length === 2) {
+        msg += ` changed their flair ${log.flairs.length - 1} time. This makes them ${cringiness} cringe.`  //Singular
     } else {
         msg += ' never changed their flair. This makes them rather based.'
     }
