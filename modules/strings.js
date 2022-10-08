@@ -5,7 +5,7 @@ const strings = {
     optOut: `You are both cringe and a coward, however [I no longer offer opt outs](https://www.reddit.com/user/flairchange_bot/comments/v8f90t/about_the_opt_out_feature/?utm_source=share&utm_medium=web2x&context=3).  \nI'll keep bothering you as much as I do with any other user. Sorry, not sorry.`,
     flairsFCBot: `Nothing to see here. Always been AuthCenter, always will. I'm no flair changer.`,
     flairsBCBot: `You leave my good friend u/basedcount_bot out of this! He's a good guy, not some dirty flair changer.`,
-    flairsUNFLAIRED: `u/--UNFLAIRED-- is, was and probably will always be: unflaired; he is the cringiest unflaired of them all. His memes are fucking good tho, that makes him both based and cringe at the same time.`
+    flairsUNFLAIRED: `The name which you ask about is that of an unflaired, give them no attention. Simply know that they've been an unflaired for most of their miserable, flairless life.`
 }
 
 const ins = {
@@ -59,7 +59,7 @@ function getListFlairs(username, log, delay, pills) {
         return strings.flairsFCBot + '\n\n' + strings.footer + listFooter
     } else if (username === 'basedcount_bot') {
         return strings.flairsBCBot + '\n\n' + strings.footer + listFooter
-    } else if (username === '--UNFLAIRED--' && log.unflaired) {
+    } else if (username === '--UNFLAIRED--') {
         return strings.flairsUNFLAIRED + '\n\n' + strings.footer + listFooter
     }
 
