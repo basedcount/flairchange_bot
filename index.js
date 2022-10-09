@@ -15,7 +15,7 @@ const basedUri = process.env.BASED_URI
 const client = new MongoClient(uri)
 const basedClient = new MongoClient(basedUri)
 const r = new Snoowrap({
-    userAgent: 'flairchange_bot v2.4.0; A bot detecting user flair changes, by u/Nerd02',
+    userAgent: 'flairchange_bot v2.4.1; A bot detecting user flair changes, by u/Nerd02',
     clientId: process.env.CLIENT_ID,
     clientSecret: process.env.CLIENT_SECRET,
     username: process.env.REDDIT_USER,
@@ -71,7 +71,7 @@ function run() {
                         newUser(comment, db, flair)
 
                     }
-                } else if (flair === null && (res.flairs.at(-1).flair == 'null' || res.flairs.at(-1).flair == 'Unflaired')) { //Unflaired, is in DB and is a registered unflaired
+                } else if (flair === null && res.flairs.at(-1).flair == 'Unflaired') { //Unflaired, is in DB and is a registered unflaired
                     unflaired(comment)
 
                 } else if (flair === null && res.flairs.at(-1).flair != flair) { //Is in DB but switched to unflaired
@@ -112,7 +112,7 @@ async function flairChange(comment, db, newF, res) {
     if (!isSpam(res)) { //If user isn't spamming, push to DB, send message, 
         db.updateOne({ id: comment.author_fullname }, { $push: { flairs: { 'flair': newF, 'dateAdded': new Date() } } }, err => { if (err) throw err })
 
-        if (oldF == 'null' || oldF == 'Unflaired') { //If user went unflaired and has now flaired up don't send any message
+        if (oldF == 'Unflaired') { //If user went unflaired and has now flaired up don't send any message
             return
 
         } else {
@@ -148,7 +148,7 @@ async function flairChange(comment, db, newF, res) {
     }
 }
 
-//Detects changes from any flair to unflaired. Toggles the 'unflaired' attribute in the DB
+//Detects changes from any flair to unflaired.
 async function flairChangeUnflaired(comment, res, db) {
     console.log('Flair change!', comment.author.name, 'was', res.flairs.at(-1).flair, 'now is UNFLAIRED')
     if (!isSpam(res)) {
