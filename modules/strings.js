@@ -17,7 +17,7 @@ const ins = {
     PurpleLibRight: "\n\nNow come on, put your pants back on and go outside, you dirty degen.  \nNo wait, not that way. There's a school over there!",
     LibCenter: "\n\nWait, those were too many words, I'm sure. Maybe you'll understand this, monke: \"oo oo aah YOU CRINGE ahah ehe\".",
     LibLeft: "\n\nYeah yeah, I know. In your ideal leftist commune everyone loves each other and no one insults anybody. Guess what? Welcome to the real world. What are you gonna do? Cancel me on twitter?",
-    Left: "\n\n If Orange was a flair you probably would have picked that, am I right? You watermelon-looking snowflake.",
+    Left: "\n\nIf Orange was a flair you probably would have picked that, am I right? You watermelon-looking snowflake.",
     AuthLeft: "\n\nWhat? You are hungry? You want food? I fear you've chosen the wrong flair, comrade.",
     AuthCenter: "\n\nThat being said... Based and fellow Auth pilled, welcome home.",
     Centrist: "\n\nTell us, are you scared of politics in general or are you just too much of a coward to let everyone know what you think?",
@@ -27,14 +27,32 @@ const ins = {
 //String for regular flair changes
 function getFlair(author, flairOld, dateStr, flairNew) {
     let intro = `Did you just change your flair, u/${author}? Last time I checked you were ${flairArticled(flairOld)} on ${dateStr}. How come now you are ${flairArticled(flairNew)}? Have you perhaps shifted your ideals? Because that's cringe, you know?`
-    return intro + ins[flairNew] + strings.footer
+
+    if(flairOld.includes('Chad')){  //Chad -> regular flair
+        const oldChad = '\n\nNo chad rules forever, friend. We salute a fallen chad and welcome a new one.'
+        return intro + oldChad + strings.footer
+    } else if(flairNew.includes('Chad')){   //Regular flair -> chad
+        const newChad = '\n\nRejoice, PCM! All hail the new chad! We wish great memes and a many based to come your way.'
+        return intro + newChad + strings.footer
+    }
+
+    return intro + ins[flairNew] + strings.footer   //Default case
 }
 
-//String for leaderboard (needs to touch grass)
+//String for top flair changers (needs to touch grass)
 function getGrass(author, flairOld, dateStr, flairNew, size, pos) {
     let intro = `Did you just change your flair, u/${author}? Last time I checked you were ${flairArticled(flairOld)} on ${dateStr}. How come now you are ${flairArticled(flairNew)}? Have you perhaps shifted your ideals? Because that's cringe, you know?`
     let grass = `\n\nOh and by the way. You have already changed your flair ${size} times, making you the ${pos} largest flair changer in this sub.\nGo touch some fucking grass.`
-    return intro + grass + strings.footer
+
+    if(flairOld.includes('Chad')){  //Chad -> regular flair
+        const oldChad = '\n\nNo chad rules forever, friend. We salute a fallen chad and welcome a new one.'
+        return intro + oldChad + grass + strings.footer
+    } else if(flairNew.includes('Chad')){   //Regular flair -> chad
+        const newChad = '\n\nRejoice, PCM! All hail the new chad! We wish great memes and a many based to come your way.'
+        return intro + newChad + grass + strings.footer
+    }
+
+    return intro + grass + strings.footer   //Default case
 }
 
 //String for switch from flair to unflaired
