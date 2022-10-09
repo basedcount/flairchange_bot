@@ -196,7 +196,7 @@ async function optOut(comment, res, db, context) {
             id: comment.author_fullname,
             name: comment.author.name,
             flairs: [{
-                'flair': flair,
+                'flair': flairText(comment),
                 'dateAdded': new Date()
             }],
             optOut: true
