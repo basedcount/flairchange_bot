@@ -71,7 +71,7 @@ function run() {
                         newUser(comment, db, flair)
 
                     }
-                } else if (flair === null && res.flairs.at(-1).flair == 'null') { //Unflaired, is in DB and is a registered unflaired
+                } else if (flair === null && (res.flairs.at(-1).flair == 'null' || res.flairs.at(-1).flair == 'Unflaired')) { //Unflaired, is in DB and is a registered unflaired
                     unflaired(comment)
 
                 } else if (flair === null && res.flairs.at(-1).flair != flair) { //Is in DB but switched to unflaired
@@ -112,7 +112,7 @@ async function flairChange(comment, db, newF, res) {
     if (!isSpam(res)) { //If user isn't spamming, push to DB, send message, 
         db.updateOne({ id: comment.author_fullname }, { $push: { flairs: { 'flair': newF, 'dateAdded': new Date() } } }, err => { if (err) throw err })
 
-        if (oldF == 'null') { //If user went unflaired and has now flaired up don't send any message
+        if (oldF == 'null' || oldF == 'Unflaired') { //If user went unflaired and has now flaired up don't send any message
             return
 
         } else {
@@ -155,7 +155,7 @@ async function flairChangeUnflaired(comment, res, db) {
         let dateStr = getDateStr(res.flairs.at(-1).dateAdded)
         let msg = getUnflaired(comment.author.name, res.flairs.at(-1).flair, dateStr)
 
-        db.updateOne({ id: res.id }, { $push: { flairs: { 'flair': 'null', 'dateAdded': new Date() } } })
+        db.updateOne({ id: res.id }, { $push: { flairs: { 'flair': 'Unflaired', 'dateAdded': new Date() } } })
 
         reply(comment, msg)
 
