@@ -1,6 +1,8 @@
+import c from "./const.js"
+
 const strings = {
     // outro: `\n\n*"You have the right to change your mind, as I have the right to shame you for doing so." - Anonymous*`, //unused
-    footer: `\n\n^(I am a bot, my mission is to spot cringe flair changers. If you want to check another user's flair history write) **^(!flairs u/<name>)** ^(in a comment. Have a look at my [FAQ](https://www.reddit.com/user/flairchange_bot/comments/uf7kuy/bip_bop) and the [leaderboard](https://www.reddit.com/user/flairchange_bot/comments/uuhlu2/leaderboard).)`,
+    footer: `\n\n[FAQ](https://www.reddit.com/user/flairchange_bot/comments/uf7kuy/bip_bop) - [Leaderboard](https://www.reddit.com/user/flairchange_bot/comments/uuhlu2/leaderboard)\n\n^(I am a bot, my mission is to spot cringe flair changers. If you want to check another user's flair history write) **^(!flairs u/<name>)** ^(in a comment.)`,
     unflairedChangeOutro: `\n\nYou are beyond cringe, you are disgusting and deserving of all the downvotes you are going to get. Repent now and pick a new flair before it's too late.`,
     optOut: `You are both cringe and a coward, however [I no longer offer opt outs](https://www.reddit.com/user/flairchange_bot/comments/v8f90t/about_the_opt_out_feature/?utm_source=share&utm_medium=web2x&context=3).  \nI'll keep bothering you as much as I do with any other user. Sorry, not sorry.`,
     flairsFCBot: `Nothing to see here. Always been AuthCenter, always will. I'm no flair changer.`,
@@ -90,23 +92,72 @@ function getListFlairs(username, log, delay, pills) {
     }
     msg += ' Here\'s their flair history:\n\n'
 
-    log.flairs.forEach((elem, i) => {
-        if (i == 0) {
-            msg += `${i + 1}) Started as ${elem.flair} on ${parseDate(elem.dateAdded)}.\n\n`
-        } else {
-            if (elem.flair == 'null') {
-                msg += `${i + 1}) Went UNFLAIRED on ${parseDate(elem.dateAdded)}.\n\n`
 
+    //This is to ensure no comment is over 10k chars of length
+    if (log.flairs.length <= c.MAX_BASE_LIST)   // FC <= 169 - Base + Entry base - WORST CASE: 9953 chars
+        msg = listShort(msg, log.flairs);
+    else if (c.MAX_BASE_LIST < log.flairs.length && log.flairs.length <= c.MAX_NO_FLUFF_LIST)// 169 < FC <= 242 - Base no fluff + Entry no fluff - WORST CASE: 10000 chars
+        msg = listLong(msg, log.flairs);
+    else if (log.flairs.length > c.MIN_SEPARATOR_LIST)  //FC > 240 - Base no fluff + Entry no fluff + Separator@240 - WORST CASE: 9924 chars
+        msg = listVeryLong(msg, log.flairs);
+
+
+    //Full entries
+    function listShort(msg, flairs) {
+        flairs.forEach((elem, i) => {
+            if (i == 0) {
+                msg += `1. Started as ${elem.flair} on ${parseDate(elem.dateAdded)}\n\n`
             } else {
-                msg += `${i + 1}) Switched to ${elem.flair} on ${parseDate(elem.dateAdded)}.\n\n`
+                if (elem.flair == 'null') {
+                    msg += `1. Went UNFLAIRED on ${parseDate(elem.dateAdded)}\n\n`
+                } else {
+                    msg += `1. Switched to ${elem.flair} on ${parseDate(elem.dateAdded)}\n\n`
+                }
+            }
+        })
 
+        return msg;
+    }
+
+    //No fluff in flair list entries
+    function listLong(msg, flairs) {
+        flairs.forEach((elem, i) => {
+            if (i == 0) {
+                msg += `1. ${elem.flair} on ${parseDate(elem.dateAdded)}\n\n`
+            } else {
+                if (elem.flair == 'null') {
+                    msg += `1. UNFLAIRED on ${parseDate(elem.dateAdded)}\n\n`
+                } else {
+                    msg += `1. ${elem.flair} on ${parseDate(elem.dateAdded)}\n\n`
+                }
+            }
+        })
+        
+        return msg;
+    }
+
+    //No fluff + separator in list entries
+    function listVeryLong(msg, flairs) {
+        for(const [i, elem] of flairs.entries()){
+            if(i >= c.MIN_SEPARATOR_LIST) break;    //stop at 240 (where separator will be added) - this is better than forEach, less iterations
+
+            if (i == 0) {
+                msg += `1. ${elem.flair} on ${parseDate(elem.dateAdded)}\n\n`
+            } else {
+                if (elem.flair == 'null') {
+                    msg += `1. UNFLAIRED on ${parseDate(elem.dateAdded)}\n\n`
+                } else {
+                    msg += `1. ${elem.flair} on ${parseDate(elem.dateAdded)}\n\n`
+                }
             }
         }
-    })
 
-    //Getting rid of these. In due time they'll be replaced by a link to the website's REDESIGN
-    // if (pills === 1) msg += `They have ${pills} pill, check it out on [basedcount.com](https://basedcount.com/u/${username}).\n\n`
-    // else if (pills > 1) msg += `They have ${pills} pills, check them out on [basedcount.com](https://basedcount.com/u/${username}).\n\n`
+        msg += `*Due to technical limitations imposed by Reddit, this person's flair count is too long to be displayed correctly.*\n\n`   //Separator
+
+        msg += `${flairs.length}\. ${flairs.at(-1).flair} on ${parseDate(flairs.at(-1).dateAdded)}\n\n`   //Last entry
+        
+        return msg;
+    }
 
     return msg + strings.footer + listFooter
 }
@@ -152,14 +203,14 @@ function escape(str, toEscape) {
 }
 
 //Returns a date in the YYYY-MM-DD hh-mm format
-function parseDate(d){
+function parseDate(d) {
     const dateStr = d.toISOString();
     const dateStrMinified = dateStr.substring(0, dateStr.indexOf('T'));
 
     const hour = d.getHours();
     const minute = d.getMinutes();
 
-    return `${dateStrMinified} ${hour}:${minute} UTC`;
+    return `${dateStrMinified} ${hour}:${minute}`;
 }
 
 export {
