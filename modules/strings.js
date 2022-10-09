@@ -147,7 +147,7 @@ function getListFlairs(username, log, delay) {
             }
         }
 
-        msg += `*Due to technical limitations imposed by Reddit, this person's flair count is too long to be displayed correctly.*\n\n`   //Separator
+        msg += `*Due to technical limitations imposed by Reddit, this user's flair count is too long to be displayed correctly.*\n\n`   //Separator
 
         msg += `${flairs.length}\. ${flairs.at(-1).flair} on ${parseDate(flairs.at(-1).dateAdded)}\n\n`   //Last entry
         
