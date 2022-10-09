@@ -52,7 +52,7 @@ function getOptOut() {
 }
 
 //Returns a list of flair changes for the matching 'username'
-function getListFlairs(username, log, delay, pills) {
+function getListFlairs(username, log, delay) {
     // let listFooter = ` ^(Each user can use this command once every ${delay} minutes.)`   //Use this if DELAY > 1
     let listFooter = ` ^(Each user can use this command once every minute.)`
 

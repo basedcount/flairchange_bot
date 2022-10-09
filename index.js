@@ -294,9 +294,9 @@ async function summonListFlairs(comment, db, based) {
         reply(comment, getListFlairsErr(1, c.SUMMON_DELAY))
         return false //WARNING - SPAM: errors aren't counted in the antispam count. Should be fixed if abused
     }
-    let pills = await isBased(username, based) //Get the number of pills (if any)
+    // let pills = await isBased(username, based) //Get the number of pills (if any)
 
-    reply(comment, getListFlairs(username, log, c.SUMMON_DELAY, pills)) //Reply!
+    reply(comment, getListFlairs(username, log, c.SUMMON_DELAY)) //Reply!
 
     return true
 }
@@ -391,7 +391,7 @@ function reply(comment, msg) {
     }
 }
 
-//Returns 0 if a user is not based (and has pills), returns their number of pills if they are
+//[DEPRECATED] Returns 0 if a user is not based (and has pills), returns their number of pills if they are
 async function isBased(username, based) {
     const pipe = [{
         $match: { pills: { $not: { $size: 0 } }, name: username }
