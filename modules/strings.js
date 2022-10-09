@@ -26,14 +26,12 @@ const ins = {
 
 //String for regular flair changes
 function getFlair(author, flairOld, dateStr, flairNew) {
-    if (author.includes('_')) author = escape(author, '_')
     let intro = `Did you just change your flair, u/${author}? Last time I checked you were ${flairArticled(flairOld)} on ${dateStr}. How come now you are ${flairArticled(flairNew)}? Have you perhaps shifted your ideals? Because that's cringe, you know?`
     return intro + ins[flairNew] + strings.footer
 }
 
 //String for leaderboard (needs to touch grass)
 function getGrass(author, flairOld, dateStr, flairNew, size, pos) {
-    if (author.includes('_')) author = escape(author, '_')
     let intro = `Did you just change your flair, u/${author}? Last time I checked you were ${flairArticled(flairOld)} on ${dateStr}. How come now you are ${flairArticled(flairNew)}? Have you perhaps shifted your ideals? Because that's cringe, you know?`
     let grass = `\n\nOh and by the way. You have already changed your flair ${size} times, making you the ${pos} largest flair changer in this sub.\nGo touch some fucking grass.`
     return intro + grass + strings.footer
@@ -41,7 +39,6 @@ function getGrass(author, flairOld, dateStr, flairNew, size, pos) {
 
 //String for switch from flair to unflaired
 function getUnflaired(author, flairOld, dateStr) {
-    if (author.includes('_')) author = escape(author, '_')
     let unflairedChangeIntro = `Did you just change your flair, u/${author}? Last time I checked you were ${flairArticled(flairOld)} on ${dateStr}. How come now you are **unflaired**? Not only you are a dirty flair changer, you also willingly chose to join those subhumans.`
     return unflairedChangeIntro + strings.unflairedChangeOutro + strings.footer
 }
@@ -64,8 +61,6 @@ function getListFlairs(username, log, delay) {
     } else if (username === '--UNFLAIRED--') {
         return strings.flairsUNFLAIRED + '\n\n' + strings.footer + listFooter
     }
-
-    if (username.includes('_')) username = escape(username, '_')
 
     let msg = `User u/${username}`
     let cringiness
@@ -190,16 +185,6 @@ function flairArticled(src) {
         if (l == 'a' || l == 'e' || l == 'i' || l == 'o' || l == 'u') return true
         else return false
     }
-}
-
-//Escapes all occurrences of 'toEscape' in 'str'
-function escape(str, toEscape) {
-    let res = ''
-    for (let i = 0; i < str.length; i++) {
-        if (str[i] === toEscape) res += `\\${str[i]}`
-        else res += str[i]
-    }
-    return res
 }
 
 //Returns a date in the YYYY-MM-DD hh-mm format
