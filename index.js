@@ -90,7 +90,7 @@ function run() {
 
             if (comment.body.includes('!flairs') && !comment.body.includes('!flairs u/<name>')) { //The bot was summoned using the "!flairs" command
                 setTimeout(() => {
-                        summonListFlairsWrapper(comment, db, based)
+                        summonListFlairsWrapper(comment, db)
                     }, 10000) //Wait 10 seconds (in case of both flair change and summon, avoid ratelimit)
             }
         }
@@ -241,7 +241,7 @@ async function leaderboard() {
 
 //Handles the "!flairs" command, checks wether a user is spamming said command or not, calls summonListFlairs if user isn't spamming.
 //Callers are saved in a 'callers' object array, along with the timestamp of their last call
-function summonListFlairsWrapper(comment, db, based) {
+function summonListFlairsWrapper(comment, db) {
     const delayMS = c.SUMMON_DELAY * 60000 // [milliseconds]
     let index
 
@@ -249,7 +249,7 @@ function summonListFlairsWrapper(comment, db, based) {
         if (callers.find(x => x.date.valueOf() + delayMS < new Date())) { //Is in object but isn't spamming
             console.log('Summon: YES - In object and match criteria', comment.author.name)
 
-            if (summonListFlairs(comment, db, based)) { //If param is a reddit username, update in the caller array
+            if (summonListFlairs(comment, db)) { //If param is a reddit username, update in the caller array
                 console.log('\tUpdating...')
                 index = callers.findIndex(x => x.id === comment.author_fullname)
                 callers[index].date = new Date()
@@ -261,14 +261,14 @@ function summonListFlairsWrapper(comment, db, based) {
     } else { //Is not in object, OK
         console.log('Summon: YES - Not in object', comment.author.name)
 
-        if (summonListFlairs(comment, db, based)) { //If param is a reddit username, push to the caller array
+        if (summonListFlairs(comment, db)) { //If param is a reddit username, push to the caller array
             callers.push({ id: comment.author_fullname, date: new Date() })
         }
     }
 }
 
 //Composes a message for the flair history of a user. Returns true if succesful, false on an error
-async function summonListFlairs(comment, db, based) {
+async function summonListFlairs(comment, db) {
     const regexReddit = /u\/[A-Za-z0-9_-]+/gm //Regex matching a reddit username:A-Z, a-z, 0-9, _, -
     const user = comment.body.match(regexReddit) //Extract username 'u/NAME' from the message, according to the REGEX
 
