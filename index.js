@@ -15,7 +15,7 @@ const basedUri = process.env.BASED_URI
 const client = new MongoClient(uri)
 // const basedClient = new MongoClient(basedUri)
 const r = new Snoowrap({
-    userAgent: 'flairchange_bot v2.4.4; A bot detecting user flair changes, by u/Nerd02',
+    userAgent: 'flairchange_bot v2.4.5; A bot detecting user flair changes, by u/Nerd02',
     clientId: process.env.CLIENT_ID,
     clientSecret: process.env.CLIENT_SECRET,
     username: process.env.REDDIT_USER,
@@ -319,6 +319,7 @@ async function newUser(comment, db, flair) {
 
 //Checks wether two flairs are adjacent on the Political Compass. True if near, false if not
 function isNear(oldF, newF) {
+    if (oldF.includes('Chad') || newF.includes('Chad')) return false
     if (ngbr[oldF].includes(newF))
         return true
     else
