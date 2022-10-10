@@ -209,11 +209,9 @@ function flairArticled(src) {
 function parseDate(d) {
     const dateStr = d.toISOString();
     const dateStrMinified = dateStr.substring(0, dateStr.indexOf('T'));
+    const hourMinutes = d.toTimeString().substr(0,5);
 
-    const hour = d.getHours();
-    const minute = d.getMinutes();
-
-    return `${dateStrMinified} ${hour}:${minute}`;
+    return `${dateStrMinified} ${hourMinutes}`;
 }
 
 export {
