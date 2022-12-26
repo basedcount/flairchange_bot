@@ -74,7 +74,7 @@ function getOptOut() {
 function getListFlairs(username, log, delay) {
     // let listFooter = ` ^(Each user can use this command once every ${delay} minutes.)`;   //Use this if DELAY > 1
     let listFooter = ` ^(Each user can use this command once every minute.)`;
-    const profileLink = `\n\n[BasedCount Profile](https://basedcount.com/u/${author}) - `;  //Can't include in footer because it's dynamic
+    const profileLink = `\n\n[BasedCount Profile](https://basedcount.com/u/${username}) - `;  //Can't include in footer because it's dynamic
 
     //Easter eggs
     if (username === 'flairchange_bot') {
