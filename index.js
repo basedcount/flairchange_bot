@@ -10,10 +10,8 @@ import { getFlair, getGrass, getUnflaired, getOptOut, getListFlairs, getListFlai
 import c from './modules/const.js'
 
 const uri = process.env.MONGODB_URI
-const basedUri = process.env.BASED_URI
 
 const client = new MongoClient(uri)
-// const basedClient = new MongoClient(basedUri)
 const r = new Snoowrap({
     userAgent: 'flairchange_bot v2.4.5; A bot detecting user flair changes, by u/Nerd02',
     clientId: process.env.CLIENT_ID,
@@ -34,10 +32,8 @@ run()
 //Main function
 function run() {
     client.connect()
-    // basedClient.connect()
 
     const db = client.db('flairChangeBot').collection('users')
-    // const based = basedClient.db('dataBased').collection('users')
 
     console.log('Starting up...')
     if (c.DEBUG) console.log('Warning, DEBUG mode is ON')
@@ -294,7 +290,6 @@ async function summonListFlairs(comment, db) {
         reply(comment, getListFlairsErr(1, c.SUMMON_DELAY))
         return false //WARNING - SPAM: errors aren't counted in the antispam count. Should be fixed if abused
     }
-    // let pills = await isBased(username, based) //Get the number of pills (if any)
 
     reply(comment, getListFlairs(username, log, c.SUMMON_DELAY)) //Reply!
 
@@ -390,18 +385,4 @@ function reply(comment, msg) {
     } else {
         console.log(`DEBUG:\n${msg}`)
     }
-}
-
-//[DEPRECATED] Returns 0 if a user is not based (and has pills), returns their number of pills if they are
-async function isBased(username, based) {
-    const pipe = [{
-        $match: { pills: { $not: { $size: 0 } }, name: username }
-    }, {
-        $project: { _id: 0, pills: { $size: '$pills' } }
-    }]
-
-    const output = await based.aggregate(pipe).toArray()
-
-    if (output.length == 0) return 0
-    else return output[0].pills
 }
