@@ -1,6 +1,5 @@
 import 'dotenv/config';
 import { CommentStream } from 'snoostorm'
-import cron from 'node-cron'
 import Snoowrap from 'snoowrap'
 import { MongoClient } from 'mongodb'
 
@@ -37,15 +36,6 @@ function run() {
 
     console.log('Starting up...')
     if (c.DEBUG) console.log('Warning, DEBUG mode is ON')
-
-    if (!c.DEBUG) {
-        cron.schedule('0 */6 * * *', () => { //Task executed every six hours, UTC timezone, only if debug mode is off
-            leaderboard() //Updates Leaderboard instantly
-            setTimeout(() => { //Updates Wall of shame after 10 seconds, avoids RATELIMIT
-                wallOfShame(db)
-            }, 10000)
-        }, { timezone: 'UTC' })
-    }
 
     stream.on('item', async comment => {
         if (blacklist.includes(comment.author.name)) return //Comment made by the bot itself, no time to lose here
@@ -198,41 +188,6 @@ async function optOut(comment, res, db, context) {
             optOut: true
         })
     }
-}
-
-//Updates the wall of shame. Post ID is hardcoded
-async function wallOfShame(db) {
-    let msg = 'EDIT: As of 2022-06-09 opt outs are no longer permitted. This post will stay here as a reminder: there\'s no escape from u/flairchange_bot.\n\nThis is the wall of shame, containing the names of all the cringe users who opted out using the \`!cringe\` command. May their cowardice never be forgotten.\n\n\n'
-
-    console.log('Updating Wall of shame')
-
-    let cursor = db.find({ optOut: true }, { sort: { _id: 1 }, projection: { _id: 0, name: 1, flairs: 1 } })
-    await cursor.forEach(item => {
-        if (item.flairs.length - 1 == 1)
-            msg += `- ${item.name}\xa0\xa0\xa0-\xa0\xa0\xa0${item.flairs.length - 1} flair change\n\n`
-        else
-            msg += `- ${item.name}\xa0\xa0\xa0-\xa0\xa0\xa0${item.flairs.length - 1} flair changes\n\n`
-    })
-    msg += `\n*This post is automatically updated every six hours. Last update: ${new Date().toUTCString()}.*`
-    r.getSubmission('utwvvg').edit(msg) //Update post
-}
-
-//Updates the leaderboard. Post ID is hardcoded
-async function leaderboard() {
-    let msg = 'This is the leaderboard of the most frequent flair changers of r/PoliticalCompassMemes. If your name appears on this list please turn off your computer and go touch some grass. \n\n'
-
-    console.log('Updating Leaderboard')
-
-    let cursor = client.db('flairChangeBot').collection('leaderboard').find()
-
-    let i = 0 //counter needs to be implemented manually, cursor.forEach != array.forEach
-    await cursor.forEach(item => {
-        if (i >= c.LEADERBOARD_POST) return //Only show the top LEADERBOARD_POST
-        i++
-        msg += `${i}) ${item.name}\xa0\xa0\xa0-\xa0\xa0\xa0${item.size - 1} flair changes\n\n`
-    })
-    msg += `\n*This post is automatically updated every six hours. Last update: ${new Date().toUTCString()}.*`
-    r.getSubmission('uuhlu2').edit(msg) //Update post
 }
 
 //Handles the "!flairs" command, checks wether a user is spamming said command or not, calls summonListFlairs if user isn't spamming.

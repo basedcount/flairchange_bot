@@ -6,7 +6,6 @@ const c = {
     OPTOUT_PTG: 20, //roll for answer to optout (for users who have already opted out)
     DEBUG: false, //Debug mode - if active doesn't send any message nor post
     LEADERBOARD_CNG: 10, //Lowest position for leaderboard positioning (on flair change)
-    LEADERBOARD_POST: 50, //Number of leaderboard entries shown (on reddit post)
     MAX_BASE_LIST: 169, //!flairs - maximum number of regular entries
     MAX_NO_FLUFF_LIST: 242, //!flairs - maximum number of shortened entries
     MIN_SEPARATOR_LIST: 240 //!flairs - minimum number of shortened entries that also require a separator being added
