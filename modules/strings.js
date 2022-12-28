@@ -109,7 +109,7 @@ function getListFlairs(username, log, delay) {
         msg += ' never changed their flair. This makes them rather based.';
     }
     msg += ' Here\'s their flair history. ';
-    msg += `Check it out along with their pills on [basedcount.com](https://basedcount.com/u/${username})!\n\n'`;
+    msg += `Check it out along with their pills on [basedcount.com](https://basedcount.com/u/${username})!\n\n`;
 
     //This is to ensure no comment is over 10k chars of length
     if (log.flairs.length <= c.MAX_BASE_LIST)   // FC <= 168 - Base + Entry base - WORST CASE: 9978 chars
