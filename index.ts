@@ -3,16 +3,21 @@ import { CommentStream } from 'snoostorm'
 import Snoowrap from 'snoowrap'
 import { MongoClient } from 'mongodb'
 
+import type { Collection, WithId } from 'mongodb';
+import type { User } from './types/user.js';
+import type { Caller } from './types/caller.js';
+import type { LeaderboardUser } from './types/leaderboard.js';
+
 import noFlair from './modules/unflaired.js'
-import ngbr from './modules/neighbour.js'
+import ngbr from './modules/neighbour.js' 
 import { getFlair, getGrass, getUnflaired, getOptOut, getListFlairs, getListFlairsErr } from './modules/strings.js'
 import c from './modules/const.js'
 
 const uri = process.env.MONGODB_URI
 
-const client = new MongoClient(uri)
+const client = new MongoClient(uri as string)
 const r = new Snoowrap({
-    userAgent: 'flairchange_bot v2.5.7; A bot detecting user flair changes, by u/Nerd02',
+    userAgent: 'flairchange_bot v3.0.0; A bot detecting user flair changes, by u/Nerd02',
     clientId: process.env.CLIENT_ID,
     clientSecret: process.env.CLIENT_SECRET,
     username: process.env.REDDIT_USER,
@@ -20,11 +25,10 @@ const r = new Snoowrap({
 })
 const stream = new CommentStream(r, {
     subreddit: 'PoliticalCompassMemes',
-    results: 1
 })
 
 const blacklist = ['flairchange_bot', 'SaveVideo', 'eazeaze']
-let callers = Array() //Array containing the callers who used the "!flairs" command, antispam
+const callers: Array<Caller> = [] //Array containing the callers who used the "!flairs" command, antispam
 
 run()
 
@@ -32,7 +36,7 @@ run()
 function run() {
     client.connect()
 
-    const db = client.db('flairChangeBot').collection('users')
+    const db = client.db('flairChangeBot').collection<User>('users')
 
     console.log('Starting up...')
     if (c.DEBUG) console.log('Warning, DEBUG mode is ON')
@@ -41,10 +45,11 @@ function run() {
         if (blacklist.includes(comment.author.name)) return //Comment made by the bot itself, no time to lose here
 
         try {
-            let flair = flairText(comment);
+            const flair = flairText(comment);
 
-            db.findOne({ id: comment.author_fullname }, async(err, res) => { //Check for any already present occurrence
+            db.findOne({ id: comment.author_fullname }, async (err, res) => { //Check for any already present occurrence
                 if (err) throw err
+                if (res === undefined) throw err;
 
                 if (flair === null && res === null) { //Unflaired and not in DB
                     unflaired(comment)
@@ -57,13 +62,13 @@ function run() {
                         newUser(comment, db, flair)
 
                     }
-                } else if (flair === null && res.flairs.at(-1).flair == 'Unflaired') { //Unflaired, is in DB and is a registered unflaired
+                } else if (flair === null && res.flairs.at(-1)?.flair == 'Unflaired') { //Unflaired, is in DB and is a registered unflaired
                     unflaired(comment)
 
-                } else if (flair === null && res.flairs.at(-1).flair != flair) { //Is in DB but switched to unflaired
+                } else if (flair === null && res.flairs.at(-1)?.flair != flair) { //Is in DB but switched to unflaired
                     flairChangeUnflaired(comment, res, db)
 
-                } else if (res.flairs.at(-1).flair != flair) { //Already present in DB and flair change
+                } else if (res.flairs.at(-1)?.flair != flair) { //Already present in DB and flair change
                     flairChange(comment, db, flair, res)
 
                 } else { //Generic comment
@@ -72,12 +77,13 @@ function run() {
                     }
                 }
             })
-        } catch (e) { console.log(e.toString()) } finally {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (e: any) { console.log(e.toString()) } finally {
 
             if (comment.body.includes('!flairs') && !comment.body.includes('!flairs u/<name>')) { //The bot was summoned using the "!flairs" command
                 setTimeout(() => {
-                        summonListFlairsWrapper(comment, db)
-                    }, 10000) //Wait 10 seconds (in case of both flair change and summon, avoid ratelimit)
+                    summonListFlairsWrapper(comment, db)
+                }, 10000) //Wait 10 seconds (in case of both flair change and summon, avoid ratelimit)
             }
         }
     })
@@ -88,9 +94,9 @@ function run() {
 
 
 //Handles all flair change instances
-async function flairChange(comment, db, newF, res) {
-    let oldF = res.flairs.at(-1).flair
-    let dateStr = getDateStr(res.flairs.at(-1).dateAdded)
+async function flairChange(comment: Snoowrap.Comment, db: Collection<User>, newF: string, res: WithId<User>) {
+    const oldF = res.flairs.at(-1)?.flair as string
+    const dateStr = getDateStr(res.flairs.at(-1)?.dateAdded as Date)
     let msg = getFlair(comment.author.name, oldF, dateStr, newF)
 
     console.log('Flair change!', comment.author.name, 'was', oldF, 'now is', newF)
@@ -102,11 +108,11 @@ async function flairChange(comment, db, newF, res) {
             return
 
         } else {
-            let ldb = await client.db('flairChangeBot').collection('leaderboard').findOne({ id: res.id }) //Leaderboard position (top 500), if any
+            const ldb = await client.db('flairChangeBot').collection<LeaderboardUser>('leaderboard').findOne({ id: res.id }) //Leaderboard position (top 500), if any
 
             if (ldb != null) { //User is on the leaderboard (touch grass)
                 if (ldb.position <= c.LEADERBOARD_CNG) {  //Separate check, it breaks if they are checked together (can't get position of undefined) 
-                    let ratingN = card2ord(ldb.position) //Get ordinal number ('second', 'third'...)
+                    const ratingN = card2ord(ldb.position) //Get ordinal number ('second', 'third'...)
 
                     msg = getGrass(comment.author.name, oldF, dateStr, newF, ldb.size, ratingN)
                     console.log('\tNot a grass toucher', comment.author.name)
@@ -114,10 +120,10 @@ async function flairChange(comment, db, newF, res) {
                     reply(comment, msg)
                     return
                 }
-            } 
+            }
             //Regular message or user on leaderboard but below LEADERBOARD_CNG
 
-            let near = isNear(oldF, newF)
+            const near = isNear(oldF, newF)
             if (near && percentage(c.NEIGHBOUR_PTG)) { //If flairs are neighbouring. Only answers a percentage of times, ends every other time
                 console.log('\tNeighbour, posting')
             } else if (near) {
@@ -135,11 +141,11 @@ async function flairChange(comment, db, newF, res) {
 }
 
 //Detects changes from any flair to unflaired.
-async function flairChangeUnflaired(comment, res, db) {
-    console.log('Flair change!', comment.author.name, 'was', res.flairs.at(-1).flair, 'now is UNFLAIRED')
+async function flairChangeUnflaired(comment: Snoowrap.Comment, res: WithId<User>, db: Collection<User>) {
+    console.log('Flair change!', comment.author.name, 'was', res.flairs.at(-1)?.flair, 'now is UNFLAIRED')
     if (!isSpam(res)) {
-        let dateStr = getDateStr(res.flairs.at(-1).dateAdded)
-        let msg = getUnflaired(comment.author.name, res.flairs.at(-1).flair, dateStr)
+        const dateStr = getDateStr(res.flairs.at(-1)?.dateAdded as Date)
+        const msg = getUnflaired(comment.author.name, res.flairs.at(-1)?.flair as string, dateStr)
 
         db.updateOne({ id: res.id }, { $push: { flairs: { 'flair': 'Unflaired', 'dateAdded': new Date() } } })
 
@@ -151,10 +157,10 @@ async function flairChangeUnflaired(comment, res, db) {
 }
 
 //Sends a random message reminding users to flair up. Only answers in a percentage of cases
-function unflaired(comment) {
+function unflaired(comment: Snoowrap.Comment) {
     if (comment == undefined) return //No clue why this happens. Probably insta-deleted comments
 
-    let rand = Math.floor(Math.random() * noFlair.length)
+    const rand = Math.floor(Math.random() * noFlair.length)
 
     if (percentage(c.UNFLAIRED_PTG)) {
         console.log(`Unflaired: ${comment.author.name}`)
@@ -163,12 +169,12 @@ function unflaired(comment) {
 }
 
 //[DEPRECATED] Handles optOut requests. Params: comment object, result returned from DB query, database object, context: 0: user already present, 1: user not present
-async function optOut(comment, res, db, context) {
+async function optOut(comment: Snoowrap.Comment, res: WithId<User> | null, db: Collection<User>, context: number) {
     const optOutMsg = getOptOut()
     console.log('Opt-out:', comment.author.name)
 
     if (context == 0) { //Normal case, user is already present in the DB
-        if (!res.optOut) {
+        if (!res?.optOut) {
             reply(comment, optOutMsg)
             db.updateOne({ id: comment.author_fullname }, { $set: { optOut: true } })
         } else {
@@ -192,15 +198,15 @@ async function optOut(comment, res, db, context) {
 
 //Handles the "!flairs" command, checks wether a user is spamming said command or not, calls summonListFlairs if user isn't spamming.
 //Callers are saved in a 'callers' object array, along with the timestamp of their last call
-function summonListFlairsWrapper(comment, db) {
+async function summonListFlairsWrapper(comment: Snoowrap.Comment, db: Collection<User>) {
     const delayMS = c.SUMMON_DELAY * 60000 // [milliseconds]
     let index
 
     if (callers.find(x => x.id === comment.author_fullname)) { //Is in object...
-        if (callers.find(x => x.date.valueOf() + delayMS < new Date())) { //Is in object but isn't spamming
+        if (callers.find(x => x.date.valueOf() + delayMS < new Date().valueOf())) { //Is in object but isn't spamming
             console.log('Summon: YES - In object and match criteria', comment.author.name)
 
-            if (summonListFlairs(comment, db)) { //If param is a reddit username, update in the caller array
+            if (await summonListFlairs(comment, db)) { //If param is a reddit username, update in the caller array
                 console.log('\tUpdating...')
                 index = callers.findIndex(x => x.id === comment.author_fullname)
                 callers[index].date = new Date()
@@ -212,14 +218,14 @@ function summonListFlairsWrapper(comment, db) {
     } else { //Is not in object, OK
         console.log('Summon: YES - Not in object', comment.author.name)
 
-        if (summonListFlairs(comment, db)) { //If param is a reddit username, push to the caller array
+        if (await summonListFlairs(comment, db)) { //If param is a reddit username, push to the caller array
             callers.push({ id: comment.author_fullname, date: new Date() })
         }
     }
 }
 
 //Composes a message for the flair history of a user. Returns true if succesful, false on an error
-async function summonListFlairs(comment, db) {
+async function summonListFlairs(comment: Snoowrap.Comment, db: Collection<User>) {
     const regexReddit = /u\/[A-Za-z0-9_-]+/gm //Regex matching a reddit username:A-Z, a-z, 0-9, _, -
     const user = comment.body.match(regexReddit) //Extract username 'u/NAME' from the message, according to the REGEX
 
@@ -232,14 +238,13 @@ async function summonListFlairs(comment, db) {
 
     let username
 
-    if (user == 'u/me') { //Handles u/me param
+    if (user.toString().toLowerCase() === 'u/me') { //Handles u/me param
         username = comment.author.name
-
     } else {
         username = user[0].slice(2) //Cut 'u/', get RAW username
     }
 
-    let log = await db.findOne({ name: { $regex: new RegExp(username, 'i') } }) //Run query, search for provided username - REGEX makes it case insensitive
+    const log = await db.findOne({ name: { $regex: new RegExp(username, 'i') } }) //Run query, search for provided username - REGEX makes it case insensitive
     if (log == null) {
         console.log('Tried answering but user', comment.author.name, 'didn\'t enter an indexed username')
         reply(comment, getListFlairsErr(1, c.SUMMON_DELAY))
@@ -256,7 +261,7 @@ async function summonListFlairs(comment, db) {
 
 
 //Pushes a new user to the DB
-async function newUser(comment, db, flair) {
+async function newUser(comment: Snoowrap.Comment, db: Collection<User>, flair: string) {
     db.insertOne({
         id: comment.author_fullname,
         name: comment.author.name,
@@ -268,17 +273,18 @@ async function newUser(comment, db, flair) {
 }
 
 //Checks wether two flairs are adjacent on the Political Compass. True if near, false if not
-function isNear(oldF, newF) {
+function isNear(oldF: string, newF: string) {
     if (oldF.includes('Chad') || newF.includes('Chad')) return false
-    if (ngbr[oldF].includes(newF))
-        return true
-    else
-        return false
+
+    const keys = Object.keys(ngbr);
+    const values = Object.values(ngbr);
+    if(values[keys.indexOf(oldF)].includes(newF)) return true;
+    else return false
 }
 
 //Formats a flairs text
-function flairText(comment) {
-    let flair = comment.author_flair_text
+function flairText(comment: Snoowrap.Comment) {
+    const flair = comment.author_flair_text
 
     if (flair != null) { //If user is NOT unflaired, parse the flair and save it
         if (flair == undefined) {
@@ -294,13 +300,13 @@ function flairText(comment) {
         } else { //Default case
             return flair.substring(flair.indexOf('-') + 2)
         }
-    } else { return null }
+    } else { return "Unflaired" }
 }
 
 //Formats a Date (object or text mimicking text) as ISO 8601 compliant YYYY-MM-DD
-function getDateStr(param) {
-    let date = new Date(param)
-    let dateStr = date.getUTCFullYear().toString() + '-' + (date.getUTCMonth() + 1).toString() + '-' + date.getUTCDate().toString() //Composing date using UTC timezone
+function getDateStr(param: Date) {
+    const date = new Date(param)
+    const dateStr = date.getUTCFullYear().toString() + '-' + (date.getUTCMonth() + 1).toString() + '-' + date.getUTCDate().toString() //Composing date using UTC timezone
 
     return dateStr
 }
@@ -310,31 +316,31 @@ function getDateStr(param) {
 
 
 //Converts a cardinal number(int) to an ordinal one (string), 1 to 20. Doesn't do anything for bigger numbers
-function card2ord(param) {
-    let nums = ['', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth', 'eleventh', 'twelfth', 'thirteenth', 'fourteenth', 'fifteenth', 'sixteenth', 'seventeenth', 'eighteenth', 'nineteenth', 'twentieth']
+function card2ord(param: number) {
+    const nums = ['', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth', 'eleventh', 'twelfth', 'thirteenth', 'fourteenth', 'fifteenth', 'sixteenth', 'seventeenth', 'eighteenth', 'nineteenth', 'twentieth']
     if (param > nums.length) return `number ${param}`
     else return nums[param - 1]
 }
 
 //RNG. Returns true n% of times, returns false otherwise
-function percentage(n) {
-    let rand = Math.floor(Math.random() * 100)
+function percentage(n: number) {
+    const rand = Math.floor(Math.random() * 100)
 
     if (rand < n) return true
     else return false
 }
 
 //Checks wether a comment is spam: not spam if the last flair change was more than 'FLAIR_CHANGE_DELAY' minutes ago 
-function isSpam(res) {
+function isSpam(res: WithId<User>) {
     const delayMS = c.FLAIR_CHANGE_DELAY * 60000 // [milliseconds]
-    let now = new Date()
+    const now = new Date()
 
-    if (now.valueOf() <= res.flairs.at(-1).dateAdded.valueOf() + delayMS) return true
+    if (now.valueOf() <= (res.flairs.at(-1)?.dateAdded as Date).valueOf() + delayMS) return true
     else return false
 }
 
 //Replies to a message, only if DEBUG mode is off
-function reply(comment, msg) {
+function reply(comment: Snoowrap.Comment, msg: string) {
     if (!c.DEBUG) {
         comment.reply(msg)
     } else {

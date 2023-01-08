@@ -1,5 +1,8 @@
 import c from "./const.js"
 
+import type { WithId } from 'mongodb';
+import type { User, Flair } from "../types/user.js";
+
 const strings = {
     // outro: `\n\n*"You have the right to change your mind, as I have the right to shame you for doing so." - Anonymous*`, //unused
     footer: `[FAQ](https://www.reddit.com/user/flairchange_bot/comments/uf7kuy/bip_bop) - [Leaderboard](https://basedcount.com/leaderboard?q=flairs)\n\n^(I am a bot, my mission is to spot cringe flair changers. If you want to check another user's flair history write) **^(!flairs u/<name>)** ^(in a comment.)`,
@@ -25,8 +28,8 @@ const ins = {
 }
 
 //String for regular flair changes
-function getFlair(author, flairOld, dateStr, flairNew) {
-    let intro = `Did you just change your flair, u/${author}? Last time I checked you were ${flairArticled(flairOld)} on ${dateStr}. How come now you are ${flairArticled(flairNew)}? Have you perhaps shifted your ideals? Because that's cringe, you know?`;
+function getFlair(author: string, flairOld: string, dateStr: string, flairNew: string) {
+    const intro = `Did you just change your flair, u/${author}? Last time I checked you were ${flairArticled(flairOld)} on ${dateStr}. How come now you are ${flairArticled(flairNew)}? Have you perhaps shifted your ideals? Because that's cringe, you know?`;
     const profileLink = `\n\n[BasedCount Profile](https://basedcount.com/u/${author}) - `;  //Can't include in footer because it's dynamic
 
     if (flairOld.includes('Chad')) {  //Chad -> regular flair
@@ -37,13 +40,16 @@ function getFlair(author, flairOld, dateStr, flairNew) {
         return intro + newChad + profileLink + strings.footer;
     }
 
-    return intro + ins[flairNew] + profileLink + strings.footer;   //Default case
+    const keys = Object.keys(ins);
+    const values = Object.values(ins);
+
+    return intro + values[keys.indexOf(flairNew)] + profileLink + strings.footer;   //Default case
 }
 
 //String for top flair changers (needs to touch grass)
-function getGrass(author, flairOld, dateStr, flairNew, size, pos) {
-    let intro = `Did you just change your flair, u/${author}? Last time I checked you were ${flairArticled(flairOld)} on ${dateStr}. How come now you are ${flairArticled(flairNew)}? Have you perhaps shifted your ideals? Because that's cringe, you know?`
-    let grass = `\n\nOh and by the way. You have already changed your flair ${size} times, making you the ${pos} largest flair changer in this sub.\nGo touch some fucking grass.`
+function getGrass(author: string, flairOld: string, dateStr: string, flairNew: string, size: number, pos: string) {
+    const intro = `Did you just change your flair, u/${author}? Last time I checked you were ${flairArticled(flairOld)} on ${dateStr}. How come now you are ${flairArticled(flairNew)}? Have you perhaps shifted your ideals? Because that's cringe, you know?`
+    const grass = `\n\nOh and by the way. You have already changed your flair ${size} times, making you the ${pos} largest flair changer in this sub.\nGo touch some fucking grass.`
     const profileLink = `\n\n[BasedCount Profile](https://basedcount.com/u/${author}) - `;  //Can't include in footer because it's dynamic
 
     if (flairOld.includes('Chad')) {  //Chad -> regular flair
@@ -58,8 +64,8 @@ function getGrass(author, flairOld, dateStr, flairNew, size, pos) {
 }
 
 //String for switch from flair to unflaired
-function getUnflaired(author, flairOld, dateStr) {
-    let unflairedChangeIntro = `Did you just change your flair, u/${author}? Last time I checked you were ${flairArticled(flairOld)} on ${dateStr}. How come now you are **unflaired**? Not only you are a dirty flair changer, you also willingly chose to join those subhumans.`;
+function getUnflaired(author: string, flairOld: string, dateStr: string) {
+    const unflairedChangeIntro = `Did you just change your flair, u/${author}? Last time I checked you were ${flairArticled(flairOld)} on ${dateStr}. How come now you are **unflaired**? Not only you are a dirty flair changer, you also willingly chose to join those subhumans.`;
     const profileLink = `\n\n[BasedCount Profile](https://basedcount.com/u/${author}) - `;  //Can't include in footer because it's dynamic
 
     return unflairedChangeIntro + strings.unflairedChangeOutro + profileLink + strings.footer;
@@ -71,9 +77,9 @@ function getOptOut() {
 }
 
 //Returns a list of flair changes for the matching 'username'
-function getListFlairs(username, log, delay) {
-    // let listFooter = ` ^(Each user can use this command once every ${delay} minutes.)`;   //Use this if DELAY > 1
-    let listFooter = ` ^(Each user can use this command once every minute.)`;
+function getListFlairs(username: string, log: WithId<User>, delay: number) {
+    // const listFooter = ` ^(Each user can use this command once every ${delay} minutes.)`;   //Use this if DELAY > 1
+    const listFooter = ` ^(Each user can use this command once every minute.)`;
     const profileLink = `\n\n[BasedCount Profile](https://basedcount.com/u/${username}) - `;  //Can't include in footer because it's dynamic
 
     //Easter eggs
@@ -121,7 +127,7 @@ function getListFlairs(username, log, delay) {
 
 
     //Full entries
-    function listShort(msg, flairs) {
+    function listShort(msg: string, flairs: Flair[]) {
         flairs.forEach((elem, i) => {
             if (i == 0) {
                 msg += `1. Started as ${elem.flair} on ${parseDate(elem.dateAdded)}\n\n`;
@@ -138,7 +144,7 @@ function getListFlairs(username, log, delay) {
     }
 
     //No fluff in flair list entries
-    function listLong(msg, flairs) {
+    function listLong(msg: string, flairs: Flair[]) {
         flairs.forEach((elem, i) => {
             if (i == 0) {
                 msg += `1. ${elem.flair} on ${parseDate(elem.dateAdded)}\n\n`
@@ -155,7 +161,7 @@ function getListFlairs(username, log, delay) {
     }
 
     //No fluff + separator in list entries
-    function listVeryLong(msg, flairs) {
+    function listVeryLong(msg: string, flairs: Flair[]) {
         for (const [i, elem] of flairs.entries()) {
             if (i >= c.MIN_SEPARATOR_LIST) break;    //stop at 240 (where separator will be added) - this is better than forEach, less iterations
 
@@ -172,7 +178,8 @@ function getListFlairs(username, log, delay) {
 
         msg += `*Due to technical limitations imposed by Reddit, this user's flair count is too long to be displayed correctly.*\n\n`   //Separator
 
-        msg += `${flairs.length}\. ${flairs.at(-1).flair} on ${parseDate(flairs.at(-1).dateAdded)}\n\n`   //Last entry
+        // eslint-disable-next-line no-useless-escape
+        msg += `${flairs.length}\. ${flairs.at(-1)?.flair} on ${parseDate(flairs.at(-1)?.dateAdded as Date)}\n\n`   //Last entry
 
         return msg;
     }
@@ -181,8 +188,8 @@ function getListFlairs(username, log, delay) {
 }
 
 //Handles different kinds of errors when summoning
-function getListFlairsErr(context, delay) {
-    let footer = `^(I am a bot, my mission is to spot cringe flair changers. You can check a user's history with the) **^( !flairs u/<name>)** ^(command. Each user can use this command once every ${delay} minutes.)`
+function getListFlairsErr(context: number, delay: number) {
+    const footer = `^(I am a bot, my mission is to spot cringe flair changers. You can check a user's history with the) **^( !flairs u/<name>)** ^(command. Each user can use this command once every ${delay} minutes.)`
     let msg
 
     if (context == 0) {
@@ -194,9 +201,9 @@ function getListFlairsErr(context, delay) {
 }
 
 //Returns a flair preceded by the appropriate indefinite article [a, an]. Special cases for 'Right' (centre) and 'Left' (centre)
-function flairArticled(src) {
-    let left = /left(?<!authleft|libleft)/gmi //Matches 'left' but not 'libleft' nor 'authleft'
-    let right = /right(?<!authright|libright)/gmi //Same for 'right'
+function flairArticled(src: string) {
+    const left = /left(?<!authleft|libleft)/gmi //Matches 'left' but not 'libleft' nor 'authleft'
+    const right = /right(?<!authright|libright)/gmi //Same for 'right'
 
     if (src.match(left) || src.match(right)) src += 'ist' //Leftist / Rightist
 
@@ -204,14 +211,14 @@ function flairArticled(src) {
     else return `a **${src}**`
 
 
-    function isVowel(l) {
+    function isVowel(l: string) {
         if (l == 'a' || l == 'e' || l == 'i' || l == 'o' || l == 'u') return true
         else return false
     }
 }
 
 //Returns a date in the YYYY-MM-DD hh-mm format
-function parseDate(d) {
+function parseDate(d: Date) {
     const dateStr = d.toISOString();
     const dateStrMinified = dateStr.substring(0, dateStr.indexOf('T'));
     const hourMinutes = d.toTimeString().substr(0, 5);
