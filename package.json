@@ -1,11 +1,12 @@
 {
     "name": "flairchange_bot",
-    "version": "3.0.0",
+    "version": "3.0.1",
     "description": "Detecting user flair changes in r/PoliticalCompassMemes",
     "main": "./build/index.js",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
-        "start": "tsc && node ."
+        "build": "tsc",
+        "start": "node ."
     },
     "repository": {
         "type": "git",
