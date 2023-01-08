@@ -1,39 +1,43 @@
 import 'dotenv/config';
-import { CommentStream } from 'snoostorm'
-import Snoowrap from 'snoowrap'
-import { MongoClient } from 'mongodb'
+import { CommentStream } from 'snoostorm';
+import Snoowrap from 'snoowrap';
+import { MongoClient } from 'mongodb';
+import cron from 'node-cron';
 
 import type { Collection, WithId } from 'mongodb';
 import type { User } from './types/user.js';
 import type { Caller } from './types/caller.js';
 import type { LeaderboardUser } from './types/leaderboard.js';
 
-import noFlair from './modules/unflaired.js'
-import ngbr from './modules/neighbour.js' 
-import { getFlair, getGrass, getUnflaired, getOptOut, getListFlairs, getListFlairsErr } from './modules/strings.js'
+import noFlair from './modules/unflaired.js';
+import ngbr from './modules/neighbour.js';
+import { getFlair, getGrass, getUnflaired, getOptOut, getListFlairs, getListFlairsErr } from './modules/strings.js';
 import c from './modules/const.js'
+import { Flair, getFlairList } from './modules/flairList.js';
 
-const uri = process.env.MONGODB_URI
+const uri = process.env.MONGODB_URI;
 
-const client = new MongoClient(uri as string)
+const client = new MongoClient(uri as string);
 const r = new Snoowrap({
-    userAgent: 'flairchange_bot v3.0.1; A bot detecting user flair changes, by u/Nerd02',
+    userAgent: 'flairchange_bot v3.1.0; A bot detecting user flair changes, by u/Nerd02',
     clientId: process.env.CLIENT_ID,
     clientSecret: process.env.CLIENT_SECRET,
     username: process.env.REDDIT_USER,
     password: process.env.REDDIT_PASS
-})
+});
 const stream = new CommentStream(r, {
     subreddit: 'PoliticalCompassMemes',
-})
+});
 
-const blacklist = ['flairchange_bot', 'SaveVideo', 'eazeaze']
-const callers: Array<Caller> = [] //Array containing the callers who used the "!flairs" command, antispam
+const blacklist = ['flairchange_bot', 'SaveVideo', 'eazeaze'];
+const callers: Array<Caller> = []; //Array containing the callers who used the "!flairs" command, antispam
+let flairList: Array<Flair>;
 
-run()
+run();
 
 //Main function
-function run() {
+async function run() {
+    flairList = await getFlairList(r);
     client.connect()
 
     const db = client.db('flairChangeBot').collection<User>('users')
@@ -41,11 +45,16 @@ function run() {
     console.log('Starting up...')
     if (c.DEBUG) console.log('Warning, DEBUG mode is ON')
 
+    cron.schedule('0 * * * *', async () => {
+        console.log('Refreshing flair list');
+        flairList = await getFlairList(r);
+    });
+
     stream.on('item', async comment => {
         if (blacklist.includes(comment.author.name)) return //Comment made by the bot itself, no time to lose here
 
         try {
-            const flair = flairText(comment);
+            const flair = flairText(comment, flairList);
 
             db.findOne({ id: comment.author_fullname }, async (err, res) => { //Check for any already present occurrence
                 if (err) throw err
@@ -188,7 +197,7 @@ async function optOut(comment: Snoowrap.Comment, res: WithId<User> | null, db: C
             id: comment.author_fullname,
             name: comment.author.name,
             flairs: [{
-                'flair': flairText(comment),
+                'flair': flairText(comment, flairList),
                 'dateAdded': new Date()
             }],
             optOut: true
@@ -278,29 +287,26 @@ function isNear(oldF: string, newF: string) {
 
     const keys = Object.keys(ngbr);
     const values = Object.values(ngbr);
-    if(values[keys.indexOf(oldF)].includes(newF)) return true;
+    if (values[keys.indexOf(oldF)].includes(newF)) return true;
     else return false
 }
 
 //Formats a flairs text
-function flairText(comment: Snoowrap.Comment) {
-    const flair = comment.author_flair_text
+function flairText(comment: Snoowrap.Comment, flairList: Flair[]) {
+    const id = comment.author_flair_template_id;
 
-    if (flair != null) { //If user is NOT unflaired, parse the flair and save it
-        if (flair == undefined) {
-            throw `Undefined flair exception: ${comment.author.name}`
-        }
+    if (id === null || id === undefined) return 'Unflaired';
 
-        if (flair.substring(1, flair.indexOf('-') - 2) == 'CENTG') { //Handles alt flairs
-            return 'GreyCentrist'
+    const flair = flairList.find(flair => (flair.id === id));
 
-        } else if (flair.substring(1, flair.indexOf('-') - 2) == 'libright2') {
-            return 'PurpleLibRight'
+    if (flair === undefined) {  //Flair not saved in wiki
+        const text = comment.author_flair_text;
+        if (text === null) return 'Unflaired';  //ID not null, text null. Very unlikely
 
-        } else { //Default case
-            return flair.substring(flair.indexOf('-') + 2)
-        }
-    } else { return "Unflaired" }
+        return text.substring(text.indexOf('-') + 2);   //Legacy flair name extraction
+    }
+
+    return flair.name;
 }
 
 //Formats a Date (object or text mimicking text) as ISO 8601 compliant YYYY-MM-DD

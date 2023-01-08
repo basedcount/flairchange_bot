@@ -17,14 +17,14 @@ const ins = {
     AuthRight: "\n\nRemember, the jannies are always watching. No gamer words, no statistics and by all means no wood cutting machines. Tell us, how are you going to flair the new account you'll make in two weeks?",
     Right: "\n\nNo, me targeting you is not part of a conspiracy. And no, your flair count is not rigged. Stop listening to QAnon or the Orange Man and come out of that basement.",
     LibRight: "\n\nAre you mad? Pointing a military grade gun at your monitor won't solve much, pal. Come on, put that rifle down and go take a shower.",
-    PurpleLibRight: "\n\nNow come on, put your pants back on and go outside, you dirty degen.  \nNo wait, not that way. There's a school over there!",
+    "Purple LibRight": "\n\nNow come on, put your pants back on and go outside, you dirty degen.  \nNo wait, not that way. There's a school over there!",
     LibCenter: "\n\nWait, those were too many words, I'm sure. Maybe you'll understand this, monke: \"oo oo aah YOU CRINGE ahah ehe\".",
     LibLeft: "\n\nYeah yeah, I know. In your ideal leftist commune everyone loves each other and no one insults anybody. Guess what? Welcome to the real world. What are you gonna do? Cancel me on twitter?",
     Left: "\n\nIf Orange was a flair you probably would have picked that, am I right? You watermelon-looking snowflake.",
     AuthLeft: "\n\nWhat? You are hungry? You want food? I fear you've chosen the wrong flair, comrade.",
     AuthCenter: "\n\nThat being said... Based and fellow Auth pilled, welcome home.",
     Centrist: "\n\nTell us, are you scared of politics in general or are you just too much of a coward to let everyone know what you think?",
-    GreyCentrist: "\n\nActually nevermind, you are good. Not having opinions is still more based than having dumb ones. Happy grilling, brother."
+    "Grey Centrist": "\n\nActually nevermind, you are good. Not having opinions is still more based than having dumb ones. Happy grilling, brother."
 }
 
 //String for regular flair changes
@@ -77,6 +77,7 @@ function getOptOut() {
 }
 
 //Returns a list of flair changes for the matching 'username'
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function getListFlairs(username: string, log: WithId<User>, delay: number) {
     // const listFooter = ` ^(Each user can use this command once every ${delay} minutes.)`;   //Use this if DELAY > 1
     const listFooter = ` ^(Each user can use this command once every minute.)`;

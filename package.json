@@ -1,6 +1,6 @@
 {
     "name": "flairchange_bot",
-    "version": "3.0.1",
+    "version": "3.1.0",
     "description": "Detecting user flair changes in r/PoliticalCompassMemes",
     "main": "./build/index.js",
     "scripts": {
@@ -25,11 +25,14 @@
     "dependencies": {
         "dotenv": "^16.0.0",
         "mongodb": "^4.5.0",
+        "node-cron": "^3.0.2",
         "snoostorm": "^1.5.2",
-        "snoowrap": "^1.23.0"
+        "snoowrap": "^1.23.0",
+        "yaml": "^2.2.1"
     },
     "type": "module",
     "devDependencies": {
+        "@types/node-cron": "^3.0.7",
         "@typescript-eslint/eslint-plugin": "^5.48.0",
         "@typescript-eslint/parser": "^5.48.0",
         "eslint": "^8.31.0",
