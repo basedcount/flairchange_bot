@@ -11,7 +11,7 @@ import type { LeaderboardUser } from './types/leaderboard.js';
 
 import noFlair from './modules/unflaired.js';
 import ngbr from './modules/neighbour.js';
-import { getFlair, getGrass, getUnflaired, getOptOut, getListFlairs, getListFlairsErr } from './modules/strings.js';
+import { getFlair, getGrass, getUnflaired, getListFlairs, getListFlairsErr } from './modules/strings.js';
 import c from './modules/const.js'
 import { Flair, getFlairList } from './modules/flairList.js';
 
@@ -19,7 +19,7 @@ const uri = process.env.MONGODB_URI;
 
 const client = new MongoClient(uri as string);
 const r = new Snoowrap({
-    userAgent: 'flairchange_bot v3.1.0; A bot detecting user flair changes, by u/Nerd02',
+    userAgent: 'flairchange_bot v3.1.1; A bot detecting user flair changes, by u/Nerd02',
     clientId: process.env.CLIENT_ID,
     clientSecret: process.env.CLIENT_SECRET,
     username: process.env.REDDIT_USER,
@@ -31,13 +31,12 @@ const stream = new CommentStream(r, {
 
 const blacklist = ['flairchange_bot', 'SaveVideo', 'eazeaze'];
 const callers: Array<Caller> = []; //Array containing the callers who used the "!flairs" command, antispam
-let flairList: Array<Flair>;
 
 run();
 
 //Main function
 async function run() {
-    flairList = await getFlairList(r);
+    let flairList: Array<Flair> = await getFlairList(r);
     client.connect()
 
     const db = client.db('flairChangeBot').collection<User>('users')
@@ -64,13 +63,8 @@ async function run() {
                     unflaired(comment)
 
                 } else if (res === null) { //Flaired, not in DB
-                    if (comment.body.includes('!cringe')) {
-                        optOut(comment, res, db, 1) //Context 1 handles the new user inserction
+                    newUser(comment, db, flair)
 
-                    } else {
-                        newUser(comment, db, flair)
-
-                    }
                 } else if (flair === null && res.flairs.at(-1)?.flair == 'Unflaired') { //Unflaired, is in DB and is a registered unflaired
                     unflaired(comment)
 
@@ -80,10 +74,6 @@ async function run() {
                 } else if (res.flairs.at(-1)?.flair != flair) { //Already present in DB and flair change
                     flairChange(comment, db, flair, res)
 
-                } else { //Generic comment
-                    if (comment.body.includes('!cringe')) {
-                        optOut(comment, res, db, 0)
-                    }
                 }
             })
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -174,34 +164,6 @@ function unflaired(comment: Snoowrap.Comment) {
     if (percentage(c.UNFLAIRED_PTG)) {
         console.log(`Unflaired: ${comment.author.name}`)
         reply(comment, noFlair[rand])
-    }
-}
-
-//[DEPRECATED] Handles optOut requests. Params: comment object, result returned from DB query, database object, context: 0: user already present, 1: user not present
-async function optOut(comment: Snoowrap.Comment, res: WithId<User> | null, db: Collection<User>, context: number) {
-    const optOutMsg = getOptOut()
-    console.log('Opt-out:', comment.author.name)
-
-    if (context == 0) { //Normal case, user is already present in the DB
-        if (!res?.optOut) {
-            reply(comment, optOutMsg)
-            db.updateOne({ id: comment.author_fullname }, { $set: { optOut: true } })
-        } else {
-            if (percentage(c.OPTOUT_PTG)) { //User has already opted out - only answers a percentage of times
-                reply(comment, optOutMsg)
-            }
-        }
-    } else if (context == 1) { //Special case, user isn't present in DB but has requested an optOut
-        reply(comment, optOutMsg)
-        await db.insertOne({ //Add them + optOut
-            id: comment.author_fullname,
-            name: comment.author.name,
-            flairs: [{
-                'flair': flairText(comment, flairList),
-                'dateAdded': new Date()
-            }],
-            optOut: true
-        })
     }
 }
 
