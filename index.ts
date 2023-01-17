@@ -13,13 +13,13 @@ import noFlair from './modules/unflaired.js';
 import ngbr from './modules/neighbour.js';
 import { getFlair, getGrass, getUnflaired, getListFlairs, getListFlairsErr } from './modules/strings.js';
 import c from './modules/const.js'
-import { Flair, getFlairList } from './modules/flairList.js';
+import { Flair, FlairDB, getFlairList, checkNewFlairs } from './modules/flairList.js';
 
 const uri = process.env.MONGODB_URI;
 
 const client = new MongoClient(uri as string);
 const r = new Snoowrap({
-    userAgent: 'flairchange_bot v3.1.1; A bot detecting user flair changes, by u/Nerd02',
+    userAgent: 'flairchange_bot v3.2.0; A bot detecting user flair changes, by u/Nerd02',
     clientId: process.env.CLIENT_ID,
     clientSecret: process.env.CLIENT_SECRET,
     username: process.env.REDDIT_USER,
@@ -36,17 +36,21 @@ run();
 
 //Main function
 async function run() {
-    let flairList: Array<Flair> = await getFlairList(r);
-    client.connect()
+    client.connect();
 
-    const db = client.db('flairChangeBot').collection<User>('users')
+    const db = client.db('flairChangeBot').collection<User>('users');
+    const flairdb = client.db('flairChangeBot').collection<FlairDB>('flairs');
 
-    console.log('Starting up...')
-    if (c.DEBUG) console.log('Warning, DEBUG mode is ON')
+    console.log('Starting up...');
+    if (c.DEBUG) console.log('Warning, DEBUG mode is ON');
 
+    await checkNewFlairs(r, flairdb);
+    let flairList = await getFlairList(flairdb, []);
+    
     cron.schedule('0 * * * *', async () => {
         console.log('Refreshing flair list');
-        flairList = await getFlairList(r);
+        await checkNewFlairs(r, flairdb);
+        flairList = await getFlairList(flairdb, flairList);
     });
 
     stream.on('item', async comment => {
@@ -268,7 +272,7 @@ function flairText(comment: Snoowrap.Comment, flairList: Flair[]) {
         return text.substring(text.indexOf('-') + 2);   //Legacy flair name extraction
     }
 
-    return flair.name;
+    return flair.flair;
 }
 
 //Formats a Date (object or text mimicking text) as ISO 8601 compliant YYYY-MM-DD
