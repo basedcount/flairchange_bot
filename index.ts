@@ -19,7 +19,7 @@ const uri = process.env.MONGODB_URI;
 
 const client = new MongoClient(uri as string);
 const r = new Snoowrap({
-    userAgent: 'flairchange_bot v3.2.0; A bot detecting user flair changes, by u/Nerd02',
+    userAgent: 'flairchange_bot v3.2.1; A bot detecting user flair changes, by u/Nerd02',
     clientId: process.env.CLIENT_ID,
     clientSecret: process.env.CLIENT_SECRET,
     username: process.env.REDDIT_USER,
@@ -63,16 +63,16 @@ async function run() {
                 if (err) throw err
                 if (res === undefined) throw err;
 
-                if (flair === null && res === null) { //Unflaired and not in DB
+                if (flair === 'Unflaired' && res === null) { //Unflaired and not in DB
                     unflaired(comment)
 
                 } else if (res === null) { //Flaired, not in DB
                     newUser(comment, db, flair)
 
-                } else if (flair === null && res.flairs.at(-1)?.flair == 'Unflaired') { //Unflaired, is in DB and is a registered unflaired
+                } else if (flair === 'Unflaired' && res.flairs.at(-1)?.flair == 'Unflaired') { //Unflaired, is in DB and is a registered unflaired
                     unflaired(comment)
 
-                } else if (flair === null && res.flairs.at(-1)?.flair != flair) { //Is in DB but switched to unflaired
+                } else if (flair === 'Unflaired' && res.flairs.at(-1)?.flair != flair) { //Is in DB but switched to unflaired
                     flairChangeUnflaired(comment, res, db)
 
                 } else if (res.flairs.at(-1)?.flair != flair) { //Already present in DB and flair change
