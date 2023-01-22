@@ -74,8 +74,8 @@ function getUnflaired(author: string, flairOld: string, dateStr: string) {
 //Returns a list of flair changes for the matching 'username'
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function getListFlairs(username: string, log: WithId<User>, delay: number) {
-    // const listFooter = ` ^(Each user can use this command once every ${delay} minutes.)`;   //Use this if DELAY > 1
-    const listFooter = ` ^(Each user can use this command once every minute.)`;
+    const listFooter = ` ^(Each user can use this command once every ${delay} minutes.)`;   //Use this if DELAY > 1
+    // const listFooter = ` ^(Each user can use this command once every minute.)`;     //Use this if DELAY = 1
     const profileLink = `\n\n[BasedCount Profile](https://basedcount.com/u/${username}) - `;  //Can't include in footer because it's dynamic
 
     //Easter eggs

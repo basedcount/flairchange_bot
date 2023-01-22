@@ -1,5 +1,5 @@
 const c = {
-    SUMMON_DELAY: 1, //[minutes] - cooldown for summon with !flairs
+    SUMMON_DELAY: 5, //[minutes] - cooldown for summon with !flairs
     FLAIR_CHANGE_DELAY: 5, //[minutes] - cooldown for flair change
     NEIGHBOUR_PTG: 0, //roll for answer to small shifts (neighbouring quadrants)
     UNFLAIRED_PTG: 10, //roll for answer to unflaired (insult)
