@@ -10,7 +10,8 @@ const strings = {
     // optOut: `You are both cringe and a coward, however [I no longer offer opt outs](https://www.reddit.com/user/flairchange_bot/comments/v8f90t/about_the_opt_out_feature/?utm_source=share&utm_medium=web2x&context=3).  \nI'll keep bothering you as much as I do with any other user. Sorry, not sorry.`, //unused
     flairsFCBot: `Nothing to see here. Always been AuthCenter, always will. I'm no flair changer.`,
     flairsBCBot: `You leave my good friend u/basedcount_bot out of this! He's a good guy, not some dirty flair changer.`,
-    flairsUNFLAIRED: `The name which you ask about is that of an unflaired, give them no attention. Simply know that they've been an unflaired for most of their miserable, flairless life.`
+    flairsUNFLAIRED: `The name which you ask about is that of an unflaired, give them no attention. Simply know that they've been an unflaired for most of their miserable, flairless life.`,
+    footerUnflaired: "\n\n[How to flair](https://www.reddit.com/r/PoliticalCompassMemes/wiki/index/flair/) - [FAQ](https://www.reddit.com/user/flairchange_bot/comments/uf7kuy/bip_bop) - [BasedCount](https://basedcount.com)\n\n^(I am a bot, my mission is to spot cringe flair changers. If you want to check another user's flair history write) **^(!flairs u/<name>)** ^(in a comment.)"
 }
 
 const ins = {
@@ -222,10 +223,16 @@ function parseDate(d: Date) {
     return `${dateStrMinified} ${hourMinutes}`;
 }
 
+//A simple getter
+function getFooterUnflaired() {
+    return strings.footerUnflaired;
+}
+
 export {
     getFlair,
     getGrass,
     getUnflaired,
     getListFlairs,
-    getListFlairsErr
+    getListFlairsErr,
+    getFooterUnflaired
 }

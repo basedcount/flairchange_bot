@@ -11,7 +11,7 @@ import type { LeaderboardUser } from './types/leaderboard.js';
 
 import noFlair from './modules/unflaired.js';
 import ngbr from './modules/neighbour.js';
-import { getFlair, getGrass, getUnflaired, getListFlairs, getListFlairsErr } from './modules/strings.js';
+import { getFlair, getGrass, getUnflaired, getListFlairs, getListFlairsErr, getFooterUnflaired } from './modules/strings.js';
 import c from './modules/const.js'
 import { Flair, FlairDB, getFlairList, checkNewFlairs } from './modules/flairList.js';
 
@@ -19,7 +19,7 @@ const uri = process.env.MONGODB_URI;
 
 const client = new MongoClient(uri as string);
 const r = new Snoowrap({
-    userAgent: 'flairchange_bot v3.2.3; A bot detecting user flair changes, by u/Nerd02',
+    userAgent: 'flairchange_bot v3.2.4; A bot detecting user flair changes, by u/Nerd02',
     clientId: process.env.CLIENT_ID,
     clientSecret: process.env.CLIENT_SECRET,
     username: process.env.REDDIT_USER,
@@ -166,13 +166,13 @@ async function flairChangeUnflaired(comment: Snoowrap.Comment, res: WithId<User>
 
 //Sends a random message reminding users to flair up. Only answers in a percentage of cases
 function unflaired(comment: Snoowrap.Comment) {
-    if (comment == undefined) return //No clue why this happens. Probably insta-deleted comments
+    if (comment == undefined) return; //No clue why this happens. Probably insta-deleted comments
 
-    const rand = Math.floor(Math.random() * noFlair.length)
+    const rand = Math.floor(Math.random() * noFlair.length);
 
     if (percentage(c.UNFLAIRED_PTG)) {
-        console.log(`Unflaired: ${comment.author.name}`)
-        reply(comment, noFlair[rand])
+        console.log(`Unflaired: ${comment.author.name}`);
+        reply(comment, noFlair[rand] + getFooterUnflaired());
     }
 }
 
