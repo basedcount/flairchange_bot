@@ -19,7 +19,7 @@ const uri = process.env.MONGODB_URI;
 
 const client = new MongoClient(uri as string);
 const r = new Snoowrap({
-    userAgent: 'flairchange_bot v3.2.2; A bot detecting user flair changes, by u/Nerd02',
+    userAgent: 'flairchange_bot v3.2.3; A bot detecting user flair changes, by u/Nerd02',
     clientId: process.env.CLIENT_ID,
     clientSecret: process.env.CLIENT_SECRET,
     username: process.env.REDDIT_USER,
@@ -46,11 +46,16 @@ async function run() {
 
     await checkNewFlairs(r, flairdb);
     let flairList = await getFlairList(flairdb, []);
-    
+
     cron.schedule('0 * * * *', async () => {
         console.log('Refreshing flair list');
         await checkNewFlairs(r, flairdb);
         flairList = await getFlairList(flairdb, flairList);
+    });
+
+    cron.schedule('0 0 * * * ', () => {
+        console.log('Resetting !flairs callers');
+        callers.length = 0; //Empty the callers array (avoid memory leaks)
     });
 
     stream.on('item', async comment => {
@@ -118,7 +123,7 @@ async function flairChange(comment: Snoowrap.Comment, db: Collection<User>, newF
                     const ratingN = card2ord(ldb.position) //Get ordinal number ('second', 'third'...)
 
                     msg = getGrass(comment.author.name, oldF, dateStr, newF, ldb.size, ratingN)
-                    console.log('\tNot a grass toucher', comment.author.name)
+                    console.log(`\tUser is in the top ${c.LEADERBOARD_CNG}. Touch some grass`)
 
                     reply(comment, msg)
                     return
@@ -128,12 +133,12 @@ async function flairChange(comment: Snoowrap.Comment, db: Collection<User>, newF
 
             const near = isNear(oldF, newF)
             if (near && percentage(c.NEIGHBOUR_PTG)) { //If flairs are neighbouring. Only answers a percentage of times, ends every other time
-                console.log('\tNeighbour, posting')
+                console.log('\tMinor shift but passed roll: posting')
             } else if (near) {
-                console.log('\tNeighbour, not posting')
+                console.log('\tMinor shift: not posting')
                 return
             } else {
-                console.log('\tNot neighbour')
+                console.log('\tMajor shift: posting')
             }
 
             reply(comment, msg)
@@ -174,61 +179,63 @@ function unflaired(comment: Snoowrap.Comment) {
 //Handles the "!flairs" command, checks wether a user is spamming said command or not, calls summonListFlairs if user isn't spamming.
 //Callers are saved in a 'callers' object array, along with the timestamp of their last call
 async function summonListFlairsWrapper(comment: Snoowrap.Comment, db: Collection<User>) {
-    const delayMS = c.SUMMON_DELAY * 60000 // [milliseconds]
-    let index
+    const delayMS = c.SUMMON_DELAY * 60000; // [milliseconds]
+    let index;
 
     if (callers.find(x => x.id === comment.author_fullname)) { //Is in object...
         if (callers.find(x => x.date.valueOf() + delayMS < new Date().valueOf())) { //Is in object but isn't spamming
-            console.log('Summon: YES - In object and match criteria', comment.author.name)
+            console.log('!flairs request GRANTED. User:', comment.author.name);
 
             if (await summonListFlairs(comment, db)) { //If param is a reddit username, update in the caller array
-                console.log('\tUpdating...')
-                index = callers.findIndex(x => x.id === comment.author_fullname)
-                callers[index].date = new Date()
+                console.log('\tUpdating anti spam filter');
+                index = callers.findIndex(x => x.id === comment.author_fullname);
+                callers[index].date = new Date();
             }
 
         } else { //Is in object and is spamming
-            console.log('Summon: NO - In object and doesn\'t match criteria', comment.author.name)
+            console.log('!flairs request REJECTED (spam). User:', comment.author.name);
         }
     } else { //Is not in object, OK
-        console.log('Summon: YES - Not in object', comment.author.name)
+        console.log('!flairs request GRANTED. User:', comment.author.name);
 
-        if (await summonListFlairs(comment, db)) { //If param is a reddit username, push to the caller array
-            callers.push({ id: comment.author_fullname, date: new Date() })
+        const target = await summonListFlairs(comment, db);
+        if (target !== null) { //If param is a reddit username, push to the caller array
+            console.log('\tTarget:', target);
+            callers.push({ id: comment.author_fullname, date: new Date() });
         }
     }
 }
 
 //Composes a message for the flair history of a user. Returns true if succesful, false on an error
 async function summonListFlairs(comment: Snoowrap.Comment, db: Collection<User>) {
-    const regexReddit = /u\/[A-Za-z0-9_-]+/gm //Regex matching a reddit username:A-Z, a-z, 0-9, _, -
-    const user = comment.body.match(regexReddit) //Extract username 'u/NAME' from the message, according to the REGEX
+    const regexReddit = /u\/[A-Za-z0-9_-]+/gm; //Regex matching a reddit username:A-Z, a-z, 0-9, _, -
+    const user = comment.body.match(regexReddit); //Extract username 'u/NAME' from the message, according to the REGEX
 
     if (user == null) { //If no username was provided exit
-        console.log('Tried answering but user', comment.author.name, 'didn\'t enter a reddit username')
-        reply(comment, getListFlairsErr(0, c.SUMMON_DELAY))
+        console.log('Tried answering but user', comment.author.name, 'didn\'t enter a reddit username');
+        reply(comment, getListFlairsErr(0, c.SUMMON_DELAY));
 
-        return false //WARNING - SPAM: errors aren't counted in the antispam count. Should be fixed if abused
+        return null; //WARNING - SPAM: errors aren't counted in the antispam count. Should be fixed if abused
     }
 
-    let username
+    let username;
 
     if (user.toString().toLowerCase() === 'u/me') { //Handles u/me param
-        username = comment.author.name
+        username = comment.author.name;
     } else {
-        username = user[0].slice(2) //Cut 'u/', get RAW username
+        username = user[0].slice(2); //Cut 'u/', get RAW username
     }
 
-    const log = await db.findOne({ name: { $regex: new RegExp(username, 'i') } }) //Run query, search for provided username - REGEX makes it case insensitive
+    const log = await db.findOne({ name: { $regex: new RegExp(username, 'i') } }); //Run query, search for provided username - REGEX makes it case insensitive
     if (log == null) {
-        console.log('Tried answering but user', comment.author.name, 'didn\'t enter an indexed username')
-        reply(comment, getListFlairsErr(1, c.SUMMON_DELAY))
-        return false //WARNING - SPAM: errors aren't counted in the antispam count. Should be fixed if abused
+        console.log('Tried answering but user', comment.author.name, 'didn\'t enter an indexed username');
+        reply(comment, getListFlairsErr(1, c.SUMMON_DELAY));
+        return null; //WARNING - SPAM: errors aren't counted in the antispam count. Should be fixed if abused
     }
 
-    reply(comment, getListFlairs(username, log, c.SUMMON_DELAY)) //Reply!
+    reply(comment, getListFlairs(username, log, c.SUMMON_DELAY)); //Reply!
 
-    return true
+    return username;
 }
 
 
