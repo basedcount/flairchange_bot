@@ -19,7 +19,7 @@ const uri = process.env.MONGODB_URI;
 
 const client = new MongoClient(uri as string);
 const r = new Snoowrap({
-    userAgent: 'flairchange_bot v3.2.4; A bot detecting user flair changes, by u/Nerd02',
+    userAgent: 'flairchange_bot v3.2.5-TEST; A bot detecting user flair changes, by u/Nerd02',
     clientId: process.env.CLIENT_ID,
     clientSecret: process.env.CLIENT_SECRET,
     username: process.env.REDDIT_USER,
@@ -40,6 +40,8 @@ async function run() {
 
     const db = client.db('flairChangeBot').collection<User>('users');
     const flairdb = client.db('flairChangeBot').collection<FlairDB>('flairs');
+
+    const testingDB = client.db('flairChangeBot').collection<Snoowrap.Comment>('unflairedTesting');
 
     console.log('Starting up...');
     if (c.DEBUG) console.log('Warning, DEBUG mode is ON');
@@ -69,13 +71,13 @@ async function run() {
                 if (res === undefined) throw err;
 
                 if (flair === 'Unflaired' && res === null) { //Unflaired and not in DB
-                    unflaired(comment)
+                    unflaired(comment, testingDB)
 
                 } else if (res === null) { //Flaired, not in DB
                     newUser(comment, db, flair)
 
                 } else if (flair === 'Unflaired' && res.flairs.at(-1)?.flair == 'Unflaired') { //Unflaired, is in DB and is a registered unflaired
-                    unflaired(comment)
+                    unflaired(comment, testingDB)
 
                 } else if (flair === 'Unflaired' && res.flairs.at(-1)?.flair != flair) { //Is in DB but switched to unflaired
                     flairChangeUnflaired(comment, res, db)
@@ -165,12 +167,13 @@ async function flairChangeUnflaired(comment: Snoowrap.Comment, res: WithId<User>
 }
 
 //Sends a random message reminding users to flair up. Only answers in a percentage of cases
-function unflaired(comment: Snoowrap.Comment) {
+function unflaired(comment: Snoowrap.Comment, tempDb: Collection<Snoowrap.Comment>) {
     if (comment == undefined) return; //No clue why this happens. Probably insta-deleted comments
 
     const rand = Math.floor(Math.random() * noFlair.length);
 
     if (percentage(c.UNFLAIRED_PTG)) {
+        tempDb.insertOne(comment).then(() => (console.log('\tUnflaired Testing: Comment saved'))).catch(e => (console.log(e)))
         console.log(`Unflaired: ${comment.author.name}`);
         reply(comment, noFlair[rand] + getFooterUnflaired());
     }
