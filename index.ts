@@ -19,7 +19,7 @@ const uri = process.env.MONGODB_URI;
 
 const client = new MongoClient(uri as string);
 const r = new Snoowrap({
-    userAgent: 'flairchange_bot v3.2.5-TEST; A bot detecting user flair changes, by u/Nerd02',
+    userAgent: 'flairchange_bot v3.2.4; A bot detecting user flair changes, by u/Nerd02',
     clientId: process.env.CLIENT_ID,
     clientSecret: process.env.CLIENT_SECRET,
     username: process.env.REDDIT_USER,
@@ -172,7 +172,6 @@ function unflaired(comment: Snoowrap.Comment) {
 
     if (percentage(c.UNFLAIRED_PTG)) {
         console.log(`Unflaired: ${comment.author.name}`);
-        console.log(comment)
         reply(comment, noFlair[rand] + getFooterUnflaired());
     }
 }
