@@ -18,14 +18,28 @@ import { Flair, FlairDB, getFlairList, checkNewFlairs } from './modules/flairLis
 const uri = process.env.MONGODB_URI;
 
 const client = new MongoClient(uri as string);
-const r = new Snoowrap({
-    userAgent: 'flairchange_bot v3.2.4; A bot detecting user flair changes, by u/Nerd02',
+
+/*
+    This script uses two Reddit accounts: u/flairchange_bot and u/flairstealth_bot
+    The former only posts on Reddit, the latter lurks and only reads from Reddit
+    This allows us to track users who have blocked flairchange_bot (without responding to them)
+*/
+const userAgent = 'flairchange_bot v3.3.0; A bot detecting user flair changes, by u/Nerd02'
+const r = new Snoowrap({    //flairchange_bot, out facing client
+    userAgent,
     clientId: process.env.CLIENT_ID,
     clientSecret: process.env.CLIENT_SECRET,
     username: process.env.REDDIT_USER,
     password: process.env.REDDIT_PASS
 });
-const stream = new CommentStream(r, {
+const s = new Snoowrap({    //flairstealth_bot, lurking, stealthy client
+    userAgent,
+    clientId: process.env.STEALTH_CLIENT_ID,
+    clientSecret: process.env.STEALTH_CLIENT_SECRET,
+    username: process.env.STEALTH_REDDIT_USER,
+    password: process.env.STEALTH_REDDIT_PASS
+});
+const stream = new CommentStream(s, {
     subreddit: 'PoliticalCompassMemes',
 });
 
@@ -319,10 +333,24 @@ function isSpam(res: WithId<User>) {
 }
 
 //Replies to a message, only if DEBUG mode is off
-function reply(comment: Snoowrap.Comment, msg: string) {
+function reply(stealth_comment: Snoowrap.Comment, msg: string) {
     if (!c.DEBUG) {
-        comment.reply(msg)
+        try {
+            const id = stealth_comment.id;  //Target comment id, from stealth client s
+            const comment = r.getComment(id);
+
+            //If the name fetched by s doesn't match the one fetched by r the latter, it probably means that the user
+            //has blocked flairchange_bot. Don't reply.
+            //NOTE: this fixes a Reddit issue that allows the bot to reply to people who have blocked it
+            if (stealth_comment.name === comment.name) {
+                comment.reply(msg);
+            } else {
+                console.log('Tried answering but user', stealth_comment.author.name, 'has blocked the bot');
+            }
+        } catch (e) {
+            console.log(e);
+        }
     } else {
-        console.log(`DEBUG:\n${msg}`)
+        console.log(`DEBUG:\n${msg}`);
     }
 }
