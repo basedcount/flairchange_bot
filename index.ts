@@ -24,7 +24,7 @@ const client = new MongoClient(uri as string);
     The former only posts on Reddit, the latter lurks and only reads from Reddit
     This allows us to track users who have blocked flairchange_bot (without responding to them)
 */
-const userAgent = 'flairchange_bot v3.3.0; A bot detecting user flair changes, by u/Nerd02'
+const userAgent = 'flairchange_bot v3.3.1; A bot detecting user flair changes, by u/Nerd02'
 const r = new Snoowrap({    //flairchange_bot, out facing client
     userAgent,
     clientId: process.env.CLIENT_ID,
@@ -179,14 +179,21 @@ async function flairChangeUnflaired(comment: Snoowrap.Comment, res: WithId<User>
 }
 
 //Sends a random message reminding users to flair up. Only answers in a percentage of cases
-function unflaired(comment: Snoowrap.Comment) {
+async function unflaired(comment: Snoowrap.Comment) {
     if (comment == undefined) return; //No clue why this happens. Probably insta-deleted comments
 
     const rand = Math.floor(Math.random() * noFlair.length);
 
     if (percentage(c.UNFLAIRED_PTG)) {
         console.log(`Unflaired: ${comment.author.name}`);
-        reply(comment, noFlair[rand] + getFooterUnflaired());
+
+        if (await userExists(comment.author.name)) {
+            reply(comment, noFlair[rand] + getFooterUnflaired(comment.author.name));
+
+        } else {
+            reply(comment, noFlair[rand] + getFooterUnflaired(null));
+
+        }
     }
 }
 
@@ -332,6 +339,12 @@ function isSpam(res: WithId<User>) {
     else return false
 }
 
+//Checks whether a user exists in the basedcount API (flairchange_bot | basedcount_bot)
+async function userExists(name: string) {
+    const res = await fetch(`https://basedcount.com/api/user/${name}`, { method: "HEAD" });
+    return res.ok;
+}
+
 //Replies to a message, only if DEBUG mode is off
 function reply(stealth_comment: Snoowrap.Comment, msg: string) {
     if (!c.DEBUG) {
@@ -342,7 +355,7 @@ function reply(stealth_comment: Snoowrap.Comment, msg: string) {
             //If the name fetched by s doesn't match the one fetched by r the latter, it probably means that the user
             //has blocked flairchange_bot. Don't reply.
             //NOTE: this fixes a Reddit issue that allows the bot to reply to people who have blocked it
-            if (stealth_comment.name === comment.name) {
+            if (stealth_comment.author.name === comment.author.name) {
                 comment.reply(msg);
             } else {
                 console.log('Tried answering but user', stealth_comment.author.name, 'has blocked the bot');
