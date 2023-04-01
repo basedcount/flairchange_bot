@@ -24,7 +24,7 @@ const client = new MongoClient(uri as string);
     The former only posts on Reddit, the latter lurks and only reads from Reddit
     This allows us to track users who have blocked flairchange_bot (without responding to them)
 */
-const userAgent = 'flairchange_bot v3.3.1; A bot detecting user flair changes, by u/Nerd02'
+const userAgent = 'flairchange_bot v3.3.2; A bot detecting user flair changes, by u/Nerd02'
 const r = new Snoowrap({    //flairchange_bot, out facing client
     userAgent,
     clientId: process.env.CLIENT_ID,
@@ -346,24 +346,25 @@ async function userExists(name: string) {
 }
 
 //Replies to a message, only if DEBUG mode is off
-function reply(stealth_comment: Snoowrap.Comment, msg: string) {
-    if (!c.DEBUG) {
-        try {
-            const id = stealth_comment.id;  //Target comment id, from stealth client s
-            const comment = r.getComment(id);
+async function reply(stealth_comment: Snoowrap.Comment, msg: string) {
+    try {
+        const id = stealth_comment.id;  //Target comment id, from stealth client s
+        const commentFlairBot = r.getComment(id);
+        const authorFlairBot = await commentFlairBot.author.name;
 
-            //If the name fetched by s doesn't match the one fetched by r the latter, it probably means that the user
-            //has blocked flairchange_bot. Don't reply.
-            //NOTE: this fixes a Reddit issue that allows the bot to reply to people who have blocked it
-            if (stealth_comment.author.name === comment.author.name) {
-                comment.reply(msg);
+        //If the name fetched by s doesn't match the one fetched by r the latter, it probably means that the user
+        //has blocked flairchange_bot. Don't reply.
+        //NOTE: this fixes a Reddit issue that allows the bot to reply to people who have blocked it
+        if (stealth_comment.author.name === authorFlairBot) {
+            if (!c.DEBUG) {
+                commentFlairBot.reply(msg);
             } else {
-                console.log('Tried answering but user', stealth_comment.author.name, 'has blocked the bot');
+                // console.log(`DEBUG:\n${msg}`);
             }
-        } catch (e) {
-            console.log(e);
+        } else {
+            console.log('Tried answering but user', stealth_comment.author.name, 'has blocked the bot');
         }
-    } else {
-        console.log(`DEBUG:\n${msg}`);
+    } catch (e) {
+        console.log(e);
     }
 }
