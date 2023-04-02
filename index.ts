@@ -359,7 +359,7 @@ async function reply(stealth_comment: Snoowrap.Comment, msg: string) {
             if (!c.DEBUG) {
                 commentFlairBot.reply(msg);
             } else {
-                // console.log(`DEBUG:\n${msg}`);
+                console.log(`DEBUG:\n${msg}`);
             }
         } else {
             console.log('Tried answering but user', stealth_comment.author.name, 'has blocked the bot');
