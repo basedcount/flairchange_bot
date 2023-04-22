@@ -8,7 +8,7 @@ const strings = {
     footer: `[FAQ](https://www.reddit.com/user/flairchange_bot/comments/uf7kuy/bip_bop) - [Leaderboard](https://basedcount.com/leaderboard?q=flairs)\n\n^(I am a bot, my mission is to spot cringe flair changers. If you want to check another user's flair history write) **^(!flairs u/<name>)** ^(in a comment.)`,
     unflairedChangeOutro: `\n\nYou are beyond cringe, you are disgusting and deserving of all the downvotes you are going to get. Repent now and pick a new flair before it's too late.`,
     // optOut: `You are both cringe and a coward, however [I no longer offer opt outs](https://www.reddit.com/user/flairchange_bot/comments/v8f90t/about_the_opt_out_feature/?utm_source=share&utm_medium=web2x&context=3).  \nI'll keep bothering you as much as I do with any other user. Sorry, not sorry.`, //unused
-    flairsFCBot: `Nothing to see here. Always been AuthCenter, always will. I'm no flair changer.`,
+    flairsFCBot: `Nothing to see here. Always been AuthCenter, always will. I'm no flair changer.\n\nDon't bother asking what went down on April 1st 2023, nothing of significance happened on that day.`,
     flairsBCBot: `You leave my good friend u/basedcount_bot out of this! He's a good guy, not some dirty flair changer.`,
     flairsUNFLAIRED: `The name which you ask about is that of an unflaired, give them no attention. Simply know that they've been an unflaired for most of their miserable, flairless life.`,
     footerUnflaired: "[FAQ](https://www.reddit.com/user/flairchange_bot/comments/uf7kuy/bip_bop) - [How to flair](https://www.reddit.com/r/PoliticalCompassMemes/wiki/index/flair/)\n\n^(I am a bot, my mission is to spot cringe flair changers. If you want to check another user's flair history write) **^(!flairs u/<name>)** ^(in a comment.)"
@@ -73,7 +73,6 @@ function getUnflaired(author: string, flairOld: string, dateStr: string) {
 }
 
 //Returns a list of flair changes for the matching 'username'
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function getListFlairs(username: string, log: WithId<User>, delay: number) {
     const listFooter = ` ^(Each user can use this command once every ${delay} minutes.)`;   //Use this if DELAY > 1
     // const listFooter = ` ^(Each user can use this command once every minute.)`;     //Use this if DELAY = 1
@@ -129,7 +128,9 @@ function getListFlairs(username: string, log: WithId<User>, delay: number) {
             if (i == 0) {
                 msg += `1. Started as ${elem.flair} on ${parseDate(elem.dateAdded)}\n\n`;
             } else {
-                if (elem.flair == 'null') {
+                if(elem.event){
+                    msg += eventListElement(elem);
+                } else if (elem.flair == 'null') {
                     msg += `1. Went UNFLAIRED on ${parseDate(elem.dateAdded)}\n\n`;
                 } else {
                     msg += `1. Switched to ${elem.flair} on ${parseDate(elem.dateAdded)}\n\n`;
@@ -146,7 +147,9 @@ function getListFlairs(username: string, log: WithId<User>, delay: number) {
             if (i == 0) {
                 msg += `1. ${elem.flair} on ${parseDate(elem.dateAdded)}\n\n`
             } else {
-                if (elem.flair == 'null') {
+                if(elem.event){
+                    msg += eventListElement(elem);
+                } else if (elem.flair == 'null') {
                     msg += `1. UNFLAIRED on ${parseDate(elem.dateAdded)}\n\n`
                 } else {
                     msg += `1. ${elem.flair} on ${parseDate(elem.dateAdded)}\n\n`
@@ -165,7 +168,9 @@ function getListFlairs(username: string, log: WithId<User>, delay: number) {
             if (i == 0) {
                 msg += `1. ${elem.flair} on ${parseDate(elem.dateAdded)}\n\n`
             } else {
-                if (elem.flair == 'null') {
+                if(elem.event){
+                    msg += eventListElement(elem);
+                } else if (elem.flair == 'null') {
                     msg += `1. UNFLAIRED on ${parseDate(elem.dateAdded)}\n\n`
                 } else {
                     msg += `1. ${elem.flair} on ${parseDate(elem.dateAdded)}\n\n`
@@ -179,6 +184,13 @@ function getListFlairs(username: string, log: WithId<User>, delay: number) {
         msg += `${flairs.length}\. ${flairs.at(-1)?.flair} on ${parseDate(flairs.at(-1)?.dateAdded as Date)}\n\n`   //Last entry
 
         return msg;
+    }
+
+    //Handle event related flair changes - currently the only event to have ever happened is April Fools 2023
+    //WORST CASE: one char longer than worst listVeryLong
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    function eventListElement(flair: Flair){
+        return '1. Lost their flair on April Fools\' 2023\n\n';
     }
 
     return msg + '\n\n' + strings.footer + listFooter

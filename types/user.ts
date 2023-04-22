@@ -10,4 +10,5 @@ export interface User {
 export interface Flair {
     dateAdded: Date,
     flair: string,
+    event?: boolean
 }
