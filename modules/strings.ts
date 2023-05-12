@@ -17,7 +17,7 @@ const strings = {
 const ins = {
     AuthRight: "\n\nRemember, the jannies are always watching. No gamer words, no statistics and by all means no wood cutting machines. Tell us, how are you going to flair the new account you'll make in two weeks?",
     Right: "\n\nNo, me targeting you is not part of a conspiracy. And no, your flair count is not rigged. Stop listening to QAnon or the Orange Man and come out of that basement.",
-    LibRight: "\n\nAre you mad? Pointing a military grade gun at your monitor won't solve much, pal. Come on, put that rifle down and go take a shower.",
+    LibRight: "\n\nAre you mad? Wait till you hear this one: you own 17 guns but only have two hands to use them! Come on, put that rifle down and go take a shower.",
     "Purple LibRight": "\n\nNow come on, put your pants back on and go outside, you dirty degen.  \nNo wait, not that way. There's a school over there!",
     LibCenter: "\n\nWait, those were too many words, I'm sure. Maybe you'll understand this, monke: \"oo oo aah YOU CRINGE ahah ehe\".",
     LibLeft: "\n\nYeah yeah, I know. In your ideal leftist commune everyone loves each other and no one insults anybody. Guess what? Welcome to the real world. What are you gonna do? Cancel me on twitter?",
