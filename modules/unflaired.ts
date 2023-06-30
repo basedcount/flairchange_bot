@@ -9,10 +9,14 @@ const responses = [
     "For the crime of being unflaired, I hereby condemn you to being downvoted.",
     "I see no flair next to your name, why are you still talking?",
     "Get a flair or get going.",
-    "Cringe and unflaired pilled",
+    "Cringe and unflaired pilled.",
     "Roses are red,  \n violets are blue;  \n not having a flair is cringe  \n and so are you.",
     "Dear unflaired. You claim your opinion has value, yet you still refuse to flair up. Curious.",
-    "Bold of you to assume anyone will care about what you have to say. Get a flair."
+    "Bold of you to assume anyone will care about what you have to say. Get a flair.",
+    "Unlfaired: detected  \nOpinion: discarded  \nDownvote: submitted",
+    "No flair, no rights, many wrongs. Please flair up.",
+    "Flair up right now or be prepared to face the consequences of your poor choiches",
+    "I find your lack of flair disturbing."
 ]
 
 export default responses
