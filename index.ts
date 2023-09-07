@@ -24,7 +24,7 @@ const client = new MongoClient(uri as string);
     The former only posts on Reddit, the latter lurks and only reads from Reddit
     This allows us to track users who have blocked flairchange_bot (without responding to them)
 */
-const userAgent = 'flairchange_bot v3.3.6; A bot detecting user flair changes, by u/Nerd02'
+const userAgent = 'flairchange_bot v3.3.7; A bot detecting user flair changes, by u/Nerd02'
 const r = new Snoowrap({    //flairchange_bot, out facing client
     userAgent,
     clientId: process.env.CLIENT_ID,
@@ -61,7 +61,7 @@ async function run() {
     await checkNewFlairs(r, flairdb);
     let flairList = await getFlairList(flairdb, []);
 
-    cron.schedule('0 * * * *', async () => {
+    cron.schedule('*/15 * * * *', async () => {
         console.log('Refreshing flair list');
         await checkNewFlairs(r, flairdb);
         flairList = await getFlairList(flairdb, flairList);
