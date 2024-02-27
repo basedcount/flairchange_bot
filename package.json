@@ -24,7 +24,7 @@
     "homepage": "https://github.com/ornato-t/flair-change-is-cringe#readme",
     "dependencies": {
         "dotenv": "^16.0.0",
-        "mongodb": "^4.5.0",
+        "mongodb": "^4.17.0",
         "node-cron": "^3.0.2",
         "snoostorm": "^1.5.2",
         "snoowrap": "^1.23.0",
