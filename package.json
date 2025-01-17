@@ -1,6 +1,6 @@
 {
     "name": "flairchange_bot",
-    "version": "3.3.10",
+    "version": "3.3.11",
     "description": "Detecting user flair changes in r/PoliticalCompassMemes",
     "main": "./build/index.js",
     "scripts": {
