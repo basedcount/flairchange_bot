@@ -1,0 +1,13 @@
+[Unit]
+Description=Runs flairchange_bot
+After=default.target
+
+[Service]
+Type=simple
+WorkingDirectory=/path/to/repo/flairchange_bot
+ExecStart=/path/to/repo/flairchange_bot/start.sh
+Restart=always
+RestartSec=15s
+
+[Install]
+WantedBy=default.target
